@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "archive": "validation-output/vpngate-docker-amd64-preview-20261015.tar.gz",
+  "sha256": "1478c039a8c3adcc2cde963d71808243336ba7beaaf25b6e58cd38d395376dc6",
+  "size_bytes": 241508310,
+  "package_files_verified": 17,
+  "source_files_verified": 765,
+  "project_files_verified": 1046,
+  "runtime_images": 1,
+  "experimental_or_fixture_images_included": false,
+  "image_archive_loaded_and_identity_verified": true,
+  "extracted_source_offline_dependency_resolution_passed": true,
+  "packaged_source_container_smoke_passed": true,
+  "source_archive_sha256": "4ec65a2e4fe2de96b8079f22debe9d32b0ab0070759430e40c192a96ad0868b8",
+  "publication_performed": false
+}

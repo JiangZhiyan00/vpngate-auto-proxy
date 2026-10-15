@@ -1,0 +1,14 @@
+{
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "evidence_origin": "用户终端执行只读诊断后提供输出",
+  "read_only": true,
+  "capture_bytes": 24,
+  "packet_count": 0,
+  "capture_sha256": "8b279f59bc569f5103ef20bef930d7622e8e8bfad56862a92fcc4029ce6cad50",
+  "marker_groups": [],
+  "full_macos_backend_validated": false,
+  "marker_ownership_available": false,
+  "conclusion": "抓包只有文件头，正对照未被观测，不能作为业务无泄漏证据；当前没有观测到泄漏的证据",
+  "remaining_uncertainty": "抓包为空的具体原因尚未确认；即时采集及前后正对照等待修正仍待原生复验"
+}

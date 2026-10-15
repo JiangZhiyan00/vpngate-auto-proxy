@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-15T08:43:18.041415+08:00",
+  "status": "passed",
+  "original_capabilities": [
+    "NET_ADMIN",
+    "SYS_ADMIN",
+    "SETUID",
+    "SETGID",
+    "SETPCAP",
+    "KILL",
+    "CHOWN",
+    "DAC_OVERRIDE",
+    "FOWNER"
+  ],
+  "experiments": [
+    {
+      "label": "baseline",
+      "omitted": [],
+      "exit_code": 0,
+      "passed": true,
+      "log": "docker-release-capabilities-kernel-baseline.log",
+      "evidence": "完整短试通过"
+    },
+    {
+      "label": "without-net_admin",
+      "omitted": [
+        "NET_ADMIN"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-net_admin.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-sys_admin",
+      "omitted": [
+        "SYS_ADMIN"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-sys_admin.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-setuid",
+      "omitted": [
+        "SETUID"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-setuid.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-setgid",
+      "omitted": [
+        "SETGID"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-setgid.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-setpcap",
+      "omitted": [
+        "SETPCAP"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-setpcap.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-kill",
+      "omitted": [
+        "KILL"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-kill.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-chown",
+      "omitted": [
+        "CHOWN"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-chown.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-dac_override",
+      "omitted": [
+        "DAC_OVERRIDE"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-dac_override.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "without-fowner",
+      "omitted": [
+        "FOWNER"
+      ],
+      "exit_code": 1,
+      "passed": false,
+      "log": "docker-release-capabilities-kernel-without-fowner.log",
+      "evidence": "短试失败，具体阶段见日志"
+    },
+    {
+      "label": "final",
+      "omitted": [],
+      "exit_code": 0,
+      "passed": true,
+      "log": "docker-release-capabilities-kernel-final.log",
+      "evidence": "完整短试通过"
+    }
+  ],
+  "scope": "当前引擎、指定镜像与受控短试；不替代目标安全模块、长期运行和全部故障矩阵",
+  "engine": {
+    "OSType": "linux",
+    "Architecture": "aarch64",
+    "ServerVersion": "29.8.2",
+    "SecurityOptions": [
+      "name=seccomp,profile=builtin",
+      "name=cgroupns"
+    ],
+    "KernelVersion": "7.2.9-orbstack-00391-g2b298d05fbd4"
+  },
+  "images": [
+    "sha256:7a4d89965535e5eff34530e706efe58a858876e6425f51001bc2fce2510328e7",
+    "sha256:868461daa06a949e2040ad888801c9aecc0067b75a6abc82e64e3917a3f6ce18"
+  ],
+  "removable_in_current_environment": [],
+  "remaining_capabilities": [
+    "NET_ADMIN",
+    "SYS_ADMIN",
+    "SETUID",
+    "SETGID",
+    "SETPCAP",
+    "KILL",
+    "CHOWN",
+    "DAC_OVERRIDE",
+    "FOWNER"
+  ]
+}

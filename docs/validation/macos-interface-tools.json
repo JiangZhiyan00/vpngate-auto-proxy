@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "owned-interface-creation-tools",
+  "new_unit_passed": 8,
+  "default_unit_passed": 86,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "script_passed": 15,
+  "probe_ordinary_refusal_passed": true,
+  "ordinary_interface_baseline_restored": true,
+  "control_socket_setup_and_lookup_passed": true,
+  "control_socket_connected": false,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_program_and_probe_build_passed": true,
+  "admin_interface_creation_executed": false,
+  "native_interface_validated": false,
+  "native_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "sudo_noninteractive_available": false,
+  "probe_refusal_report": "validation-output/macos-interface-ordinary-refusal.json",
+  "probe_refusal_report_sha256": "570dff79ccc8499d0338518fc88a42880caa2b2f7a17b252b5ae65778a64dfb5",
+  "initial_script_invocation": {
+    "result": "导入缺少脚本目录，未执行句柄实验回归；补齐模块搜索路径后十五项通过"
+  },
+  "scope": "普通权限门槛、占用分配与句柄回收、既有资源保护、真实只读控制器查询和探针拒绝；不证明管理员创建或正式后端接入"
+}

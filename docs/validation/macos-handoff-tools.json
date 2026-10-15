@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-12T13:47:20.501543+08:00",
+  "case": "handoff-tools",
+  "status": "passed",
+  "scope": "工具及普通权限回归通过；真实控制句柄交接原生阶段未执行，不代表完整后端完成",
+  "native_tunnel_validated": false,
+  "real_custody_handoff_validated": false,
+  "full_macos_backend_validated": false,
+  "tests": {
+    "unit_passed": 13,
+    "ordinary_contracts_passed": 63,
+    "privileged_contracts_not_run": 3,
+    "privileged_integrations_not_run": 29,
+    "custody_contracts_passed": 8,
+    "generation_worker_passed": 16,
+    "handoff_stage_passed": 7,
+    "all_macos_script_regressions_passed": 118,
+    "fmt": "passed",
+    "clippy": "passed",
+    "examples_build": "passed",
+    "python_syntax": "passed",
+    "license_inventory": "passed"
+  },
+  "native_preflight": {
+    "status": "blocked",
+    "administrator": false,
+    "firewall_readable": false,
+    "host_interfaces_created": false,
+    "source": "本次原生入口只读预检的脱敏摘要；非完整原始报告归档"
+  },
+  "fixtures": [
+    {
+      "case": "handoff-fixture",
+      "status": "passed",
+      "native_tunnel_validated": false,
+      "parallel_tunnels_validated": false,
+      "full_macos_backend_validated": false,
+      "transport": "tcp",
+      "fixture_count": 3,
+      "fixture_validated": true,
+      "fixture_cleanup_errors": []
+    },
+    {
+      "case": "handoff-fixture",
+      "status": "passed",
+      "native_tunnel_validated": false,
+      "parallel_tunnels_validated": false,
+      "full_macos_backend_validated": false,
+      "transport": "udp",
+      "fixture_count": 3,
+      "fixture_validated": true,
+      "fixture_cleanup_errors": []
+    }
+  ],
+  "source_sha256": {
+    "Cargo.lock": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+    "src/platform/custody.rs": "ae36e0cffbe239af1f87e3740a74265d408a762079f3ad3b7df20be1924de3b9",
+    "examples/macos_generation_worker.rs": "9f648d785f18cce2e32025ab9b7f877dce94dc1673a868e880ef354b9718058f",
+    "scripts/macos_handoff.py": "be44fedb764bb428eb6c8eeda5df1584f53a81ca02a8e58bb064aac1e974b85b",
+    "scripts/macos_parallel.py": "d3c3ab9caed0563eee43126b7a7dda574f7d9be96709737be56300af6aa9d5b6",
+    "scripts/macos_tunnel.py": "f3caab37a96cd91eb3e70a3dc9c1260c4b8232c223aa51648b78180d08ba94df",
+    "scripts/test_macos_handoff.py": "33709c1f6f227951e34693652e2dbe42d8ecb3a1f2214dd45f6004afdfd7ada1",
+    "scripts/test_macos_generation_worker.py": "9b439769b9b8e209180cea471aacd54063717e5ebf241f07801c7cf415a9ac99",
+    "tests/contracts/custody.rs": "8df7bd354b5f33a8a4076b46243cc8e96043b2a212c239a439bf473ae603b89c"
+  }
+}

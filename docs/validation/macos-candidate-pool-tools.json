@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "case": "macos-candidate-pool-tools",
+  "new_unit_passed": 11,
+  "default_unit_passed": 198,
+  "default_contract_passed": 64,
+  "default_ignored": 35,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "dependencies_added": false,
+  "unsafe_code_added": false,
+  "candidate_pool_library_integrated": true,
+  "production_generation_and_exit_probe_entry_integrated": true,
+  "internal_success_report_injected_in_promotion_tests": true,
+  "source_and_verification_expiry_checked": true,
+  "logical_failure_and_cleanup_status_independent": true,
+  "unknown_route_cleanup_preserves_slot_and_manifest": true,
+  "cancelled_parallel_shutdown_resumable": true,
+  "candidate_round_scheduler_integrated": false,
+  "independent_health_scheduler_integrated": false,
+  "low_privilege_controller_protocol_integrated": false,
+  "public_service_integrated": false,
+  "native_root_privilege_drop_validated": false,
+  "native_public_exit_identity_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "initial_failures": [
+    "编译时使用了当前工具链不存在的结果便利方法，且端点比较多加引用；已修正",
+    "候选节点包含本地再生安全尾部，首次回归错误地再次按外部输入清洗；改用既有严格本地配置复核入口，未放宽危险指令规则"
+  ],
+  "program_binary_sha256": "9b2fc96d5df783455774bc5fa697772474558a67a5bd40e5449251bc5d3a1b5b",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "test_logs": {
+    "all-tests.log": "d7e3d8af28a36f40abc8853df2bf124788c0178daac288fefd1b17abee7966c6",
+    "build.log": "8ca66e29fe7183a70a64a02c2b6acf1889d85d6f511922ffcec9ede1b38f7b0d",
+    "clippy.log": "689a1d9d69823a1fe64561f6970ec83db9cf9e76361484c7606580f8221d3b72",
+    "first-tests.log": "759d63bf6de9f07445e4b669f61c9394d534322164cf5ca1e8ebfdcf3033dbe7",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "second-tests.log": "c5eaac18d712bcbcf6587a3d17b1536084b4699f68dc0598f8ce293b5fc4c812"
+  }
+}

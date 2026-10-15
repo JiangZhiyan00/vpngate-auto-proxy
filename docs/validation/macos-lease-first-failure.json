@@ -1,0 +1,20 @@
+{
+  "case": "lease",
+  "status": "failed",
+  "interface_lifetime_validated": false,
+  "native_tunnel_validated": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "borrower_reaped": true,
+    "baseline_restored": true,
+    "no_new_interfaces_left": true,
+    "cleanup_within_15_seconds": true
+  },
+  "scope": "仅未配置业务地址的隧道控制句柄生命周期、占用及回收实验；不验证加密隧道、业务收发、监督进程崩溃或生产隔离",
+  "error": "[Errno 102] Operation not supported on socket",
+  "borrower_exit_code": null,
+  "cleanup_seconds": 0.014,
+  "cleanup_errors": [],
+  "elapsed_seconds": 0.028
+}

@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "protected-program-install-tools",
+  "new_unit_passed": 7,
+  "default_unit_passed": 149,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "ordinary_cli_inspection_passed": true,
+  "ordinary_install_rejected_before_input": true,
+  "hidden_cli_not_in_public_help": true,
+  "program_installation_record_required_before_production_spawn": true,
+  "ordinary_transaction_backend_uses_real_filesystem": true,
+  "native_root_program_install_validated": false,
+  "native_worker_privilege_drop_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "inspection": {
+    "binary_sha256": "99bde31703d31990471209d741c3e6b4384b66c548102d3843e9775bd7a181d3",
+    "service_activated": false,
+    "system_libraries": [
+      "/System/Library/Frameworks/Security.framework/Versions/A/Security",
+      "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+      "/usr/lib/libiconv.2.dylib",
+      "/usr/lib/libSystem.B.dylib"
+    ],
+    "version": "0.1.0"
+  },
+  "all_tests_log_sha256": "3b573ecfdd9bf72726c69cd9720d839ac550597d1b455c0de67cedb6d6d0e4fc"
+}

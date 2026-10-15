@@ -1,0 +1,6 @@
+{
+  "experimental_only": true,
+  "change": "仅隔离副本跳过静态能力白名单，内核权限及实际操作保持原样",
+  "original_source_sha256": "810aa1310d9a6baf7eafc7eb0fc3921e9d761069ec1f6afd50842437fd4f9aaf",
+  "experimental_source_sha256": "a00b3a0627c4185577bd019cd5822145d26c56dc5a5e628deb0f3f8498f140a5"
+}

@@ -1,0 +1,32 @@
+{
+  "recorded_at": "2026-10-13T13:39:29.575861+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "passed-for-unprivileged-regressions",
+  "unit_passed": 267,
+  "contract_passed": 70,
+  "ignored": 36,
+  "new_component_tests": 10,
+  "new_cli_contract_tests": 2,
+  "fmt_passed": true,
+  "clippy_passed": true,
+  "build_passed": true,
+  "administrator_cross_account_delivery_validated": false,
+  "actual_production_controller_positive_run_validated": false,
+  "public_run_command_enabled": false,
+  "full_macos_backend_validated": false,
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "program_sha256": "03eccaf10b1aecba7bfca6eaa1caebfab7dda16c28571e0a76264be42de4db1f",
+  "source_sha256": {
+    "src/platform/controller.rs": "5a04e82f793dd5c8e180952e65890dd5d356f3d1398587eecc1cfa42cddef47f",
+    "src/platform/coordinator.rs": "ce95d5c7bed5bcc6fc65036b10d271692dee17279d190e85614f4f78f2f34cbb",
+    "src/platform/deployment.rs": "408a9eb9889de15c1e924ea0ae9ad100be4506a58269cd42696ecbd1a68e508b",
+    "src/main.rs": "18c51cac62e25107371fa15797961633750b2d6438afb3d94489cb2da2044441",
+    "tests/contracts/cli.rs": "aae783bd20b856097a5e0f418510afdb4d52f8e155974507e77d99714ab403ec"
+  },
+  "log_directory": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/macos-controller-process-20261013",
+  "log_sha256": {
+    "clippy.log": "a4cc48e2be440e038a33f114398086ffff1e9ea6e6e4dd1aaf0c85fbf113f3e1",
+    "tests.log": "1aa6220b71dfe4ee302cc0ff9896fe92951e72359521d83704753114b1e07fcf",
+    "build.log": "36aeba5626aba054f43d650f135dc1f30ea66757f9084c191febad29a63c5d6e"
+  }
+}

@@ -1,0 +1,70 @@
+name: 发布版本镜像
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+permissions:
+  contents: read
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+    steps:
+      - name: 读取版本源码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 检查标签及发布配置
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+          HUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          HUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          sys.path.insert(0, 'scripts')
+          from prepare_docker_publish import validate_release
+          validate_release(os.environ['RELEASE_TAG'], os.environ['DOCKERHUB_IMAGE'])
+          if os.environ['REPOSITORY_PRIVATE'] != 'false':
+              raise SystemExit('发布要求公开源码仓库，使镜像对应的完整源码材料可公开获取')
+          if not os.environ['HUB_USERNAME'] or not os.environ['HUB_TOKEN']:
+              raise SystemExit('请配置 Docker Hub 用户名与访问令牌密钥')
+          PY
+      - name: 安装固定工具链及验收依赖
+        run: |
+          rustup toolchain install 1.90.0 --profile minimal --component rustfmt --component clippy
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev pkg-config apparmor apparmor-utils
+          sudo apparmor_parser -r -W deploy/apparmor/vpngate-auto-proxy
+          sudo apparmor_parser -r -W deploy/apparmor/vpngate-auto-proxy-fixture
+      - name: 执行代码与工具回归
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: 构建、验收并冻结源码
+        run: python3 scripts/prepare_docker_publish.py --tag "$RELEASE_TAG" --image "$DOCKERHUB_IMAGE" --require-apparmor
+      - name: 发布对应版本的完整源码材料
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes 'Linux x86_64 Docker 版本；完整来源材料及校验摘要见附件。'
+          fi
+          gh release upload "$RELEASE_TAG" "validation-output/publish-$RELEASE_TAG/vpngate-source-$RELEASE_TAG.tar.gz" "validation-output/publish-$RELEASE_TAG/SHA256SUMS" "validation-output/publish-$RELEASE_TAG/validation.json"
+      - name: 登录镜像仓库
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: 推送已经验收的同一镜像
+        run: docker push "$DOCKERHUB_IMAGE:$RELEASE_TAG"

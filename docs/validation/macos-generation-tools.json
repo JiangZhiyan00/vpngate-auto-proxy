@@ -1,0 +1,45 @@
+{
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "generation-tools",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "controlled_generation_retirement_validated": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "real_worker_process_tests": 9,
+    "lifecycle_and_cleanup_tests": 7,
+    "reuse_regression_tests": 10,
+    "unit_tests_passed": 13,
+    "ordinary_contract_tests_passed": 51,
+    "privileged_tests_not_run": 32,
+    "format_check": true,
+    "strict_static_check": true,
+    "python_syntax": true,
+    "unprivileged_native_entry_blocked": true,
+    "fixture_resources_removed": true
+  },
+  "fixture": {
+    "case": "generation-fixture",
+    "status": "passed",
+    "native_tunnel_validated": false,
+    "parallel_tunnels_validated": false,
+    "full_macos_backend_validated": false,
+    "fixture_count": 3,
+    "fixture_validated": true,
+    "fixture_cleanup_errors": []
+  },
+  "fixture_source_sha256": "20f71fca814afd477f571b3294300b1a84ebf08cd5a67ce0b39eed62685ac947",
+  "scope": "仅工具及回环工作进程验证；真实索引复用后的受控代际退出仍待用户终端执行",
+  "commands": [
+    "cargo build --locked --example macos_generation_worker",
+    "python3 scripts/test_macos_generation_worker.py",
+    "python3 scripts/test_macos_generation.py",
+    "python3 scripts/test_macos_reuse.py",
+    "scripts/validate-macos-tunnel.sh --case generation --fixture-only",
+    "cargo test --locked",
+    "cargo fmt --check",
+    "cargo clippy --locked --all-targets -- -D warnings"
+  ]
+}

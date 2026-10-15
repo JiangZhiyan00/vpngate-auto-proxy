@@ -1,0 +1,40 @@
+{
+  "case": "reuse-tools",
+  "status": "passed",
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "native_tunnel_validated": false,
+  "interface_index_reuse_characterized": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "validation": {
+    "new_reuse_tests_passed": 10,
+    "existing_macos_tool_tests_passed": 29,
+    "python_syntax": "passed",
+    "native_stage": "blocked_by_administrator_preflight",
+    "long_running_tests": "deferred"
+  },
+  "commands": [
+    "python3 -m unittest discover -s scripts -p test_macos_*.py",
+    "python3 -m py_compile scripts/macos_reuse.py scripts/macos_parallel.py scripts/macos_tunnel.py scripts/test_macos_reuse.py",
+    "scripts/validate-macos-tunnel.sh --case reuse --native"
+  ],
+  "scope": "工具判定及模拟生命周期回归；实际原生索引复用未执行，未新增代际防护，不代表隔离验收通过",
+  "native_preflight": {
+    "status": "blocked",
+    "administrator": false,
+    "interfaces_created": false
+  },
+  "fixture_scope": "沿用此前通过的三受控远端夹具；本次未重复运行容器实验",
+  "revision_after_first_native_attempt": {
+    "record_date": "2026-10-12",
+    "native_evidence": "macos-reuse-first-failure.json",
+    "observation": "替代接口取得原第三条隧道索引，未取得预定活动索引；名称相同不等于索引相同",
+    "change": "预先固定第三条原隧道为观察目标，替代隧道使用已停止的活动远端；保持原销毁顺序",
+    "reuse_tests_passed": 10,
+    "all_macos_tool_tests_passed": 39,
+    "python_syntax": "passed",
+    "native_stage": "awaiting_user_terminal_rerun",
+    "index_reuse_isolation_validated": false
+  }
+}

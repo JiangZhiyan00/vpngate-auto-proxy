@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "image_id": "sha256:47ce0205fdea1584b341da670bd6701447f0a491231fa430b9caf7996cd3d00f",
+  "binary_sha256": "f58fc9cd4b28c281709051c73e3ee512fc99e5899cca0b22eb2578325c31f9b0",
+  "scope": "Docker amd64 受控短试及分发材料核验；未重跑三十分钟容量试验",
+  "recorded_at": "2026-10-15T10:07:52.211074+08:00",
+  "features": [
+    "国家/地区候选筛选及缓存恢复重新筛选",
+    "IANA 时区、夏令时及命令行状态显示",
+    "稳定版本标签触发 Docker Hub 发布工作流"
+  ],
+  "verification": {
+    "rust_passed": 388,
+    "rust_ignored": 37,
+    "python_run": 208,
+    "python_skipped": 4,
+    "format": "passed",
+    "clippy": "passed",
+    "workflow_syntax": "passed",
+    "container_smoke": "passed",
+    "distribution_materials": "passed",
+    "source_archive_and_bundle_hashes": "passed",
+    "validation_resources_cleaned": true
+  },
+  "environment": {
+    "architecture": "linux/amd64",
+    "execution": "苹果宿主 Linux 虚拟机，x86_64 模拟执行",
+    "apparmor_enforced": false,
+    "fixture": "复用已构建 x86_64 夹具，挂载当前脚本"
+  },
+  "source_archive_sha256": "3d111f69f7087745379cdc2d57f49776c578e17687a241013d618b7bcad7fc31",
+  "publication_performed": false,
+  "remaining_external_validation": "配置 GitHub 密钥及仓库变量后，首次标签推送验证远端构建、源码附件发布和 Docker Hub 推送；新版本未重跑三十分钟容量试验",
+  "logs": [
+    "validation-output/new-features-publish-complete.log",
+    "validation-output/new-features-rust-tests.log",
+    "validation-output/new-features-python-tests.log",
+    "validation-output/new-features-clippy.log",
+    "validation-output/new-features-workflow-check.log"
+  ]
+}

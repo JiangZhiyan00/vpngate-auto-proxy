@@ -1,0 +1,33 @@
+{
+  "case": "dns-fixture",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "parallel_tunnels_validated": false,
+  "full_macos_backend_validated": false,
+  "fixture_count": 3,
+  "fixture_validated": true,
+  "fixture_dns_validated": true,
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "source_sha256": "04ff5fd3c1c7b9976e73c1c16ff7fa9aa29cf44a10ca0c304be7f7ea24301549",
+  "native_tunnel_dns_validated": false,
+  "native_stage": {
+    "status": "blocked",
+    "administrator": false,
+    "interfaces_created": false
+  },
+  "validation": {
+    "dns_probe_tests_passed": 8,
+    "existing_echo_probe_tests_passed": 3,
+    "unit_tests_passed": 13,
+    "contract_tests_passed": 44,
+    "privileged_tests_not_executed": 32,
+    "default_single_tunnel_fixture": "passed",
+    "format": "passed",
+    "strict_static_analysis": "passed",
+    "python_and_shell_syntax": "passed",
+    "long_running_tests": "deferred"
+  },
+  "scope": "受控远端及本机回环验证，不代表苹果原生解析或完整后端通过"
+}

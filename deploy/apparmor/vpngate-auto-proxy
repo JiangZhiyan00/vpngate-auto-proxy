@@ -1,0 +1,60 @@
+# 本项目独立容器策略；不修改全局默认策略。
+# 规则语法依据：https://manpages.debian.org/bookworm/apparmor/apparmor.d.5.en.html
+# 装载方法依据：https://docs.docker.com/engine/security/apparmor/
+# 当前仅能在无强制实施模块的测试环境做解析校验；部署前须完成原生强制实施验收。
+#include <tunables/global>
+profile vpngate-auto-proxy flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  / r,
+  /** r,
+  /{bin,sbin,usr/bin,usr/sbin,usr/local/bin}/** mrix,
+  /{lib,lib64,usr/lib}/** mr,
+  /dev/null rw,
+  /dev/net/tun rw,
+  /run/** rwkl,
+  /tmp/** rwkl,
+  /var/lib/vap/{,**} rwkl,
+  /proc/sys/net/ipv6/conf/{all,default,lo}/disable_ipv6 w,
+
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+  network unix stream,
+  network unix dgram,
+  network netlink raw,
+  deny network packet,
+  deny network inet raw,
+  deny network inet6 raw,
+
+  capability net_admin,
+  capability sys_admin,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability kill,
+  capability chown,
+  capability dac_override,
+  capability fowner,
+  signal (send) peer=vpngate-auto-proxy,
+  signal (receive),
+  ptrace (read,readby) peer=vpngate-auto-proxy,
+
+  mount options=(rw,rbind) /run/netns/ -> /run/netns/,
+  mount options=(rw,bind) /run/netns/ -> /run/netns/,
+  mount options=(rw,rshared) -> /run/netns/,
+  mount options=(rw,shared) -> /run/netns/,
+  mount options=(rw,bind) /proc/{self,thread-self,[0-9]*}/ns/net -> /run/netns/vap_*,
+  # 此内核将命名空间文件的绑定挂载源报告为 /；目标限本项目命名空间。
+  mount options=(rw,bind) / -> /run/netns/vap_*,
+  mount options=(rw,rprivate) -> /,
+  mount fstype=proc -> /proc/,
+  # 新挂载接口将匿名挂载接入 /proc 时，审计为 move 且没有文件系统类型。
+  mount options=(rw,move) -> /proc/,
+  umount /run/netns/vap_*,
+  umount /proc/,
+
+  deny /proc/{mem,kmem,kcore,sysrq-trigger} rwklx,
+  deny /sys/firmware/** rwklx,
+  deny /sys/kernel/security/** rwklx,
+}

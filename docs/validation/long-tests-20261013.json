@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "first_batch_directory": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/long-run-20261013-ad53e92e",
+  "first_batch": {
+    "candidate_soak": "passed",
+    "waiting_soak": "failed-backoff-assertion",
+    "capacity_native": {
+      "status": "passed",
+      "actual_elapsed_seconds": 1800.4833849840215,
+      "round_trips": 65050,
+      "candidate_rounds": 244
+    },
+    "capacity_docker": {
+      "status": "passed-after-independent-full-retry",
+      "actual_elapsed_seconds": 1800.112415541,
+      "round_trips": 76800,
+      "candidate_rounds": 245
+    }
+  },
+  "first_batch_owned_resource_audit": "passed",
+  "backoff_reproduction": {
+    "original_source": "failed",
+    "actual_ms": 855,
+    "required_minimum_ms": 3900,
+    "fixed_source": "passed"
+  },
+  "fixed_build_full_matrix": {
+    "status": "all-four-groups-passed-in-current-isolated-container-environment",
+    "directory": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/long-run-20261013-backoff-2e41c2c2",
+    "duration_seconds": 1800,
+    "candidates": "passed",
+    "waiting": "passed",
+    "capacity_docker": "passed",
+    "capacity_native_initial": "failed-interface-cleanup",
+    "capacity_native_retry": {
+      "status": "passed",
+      "actual_elapsed_seconds": 1800.9651434000116,
+      "round_trips": 64600,
+      "candidate_rounds": 244,
+      "binary_sha256": "e2bbb2773be103222e90141e865cec9ecd4767609a5f4e258f4acd7e7a358f05"
+    }
+  },
+  "target_native_validated": false,
+  "security_module_validated": false,
+  "full_macos_backend_validated": false,
+  "link_cleanup_reproduction": {
+    "iterations": 300,
+    "old_false_failures": 14,
+    "interface_identity_baseline_restored": true,
+    "full_host_baseline_validated": false
+  },
+  "native_cleanup_short": "passed"
+}

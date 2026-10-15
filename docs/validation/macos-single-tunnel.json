@@ -1,0 +1,28 @@
+{
+  "case": "tunnel",
+  "status": "passed",
+  "native_tunnel_validated": true,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "native_echo": {
+      "tcp": true,
+      "udp": true,
+      "interface_index": 34
+    },
+    "new_interface": "utun6",
+    "probe_unprivileged": true,
+    "interface_created": true,
+    "interface_removed": true,
+    "no_new_interfaces_left": true,
+    "baseline_restored": true,
+    "process_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "cleanup_seconds": 0.029,
+  "cleanup_errors": [],
+  "elapsed_seconds": 0.194,
+  "openvpn_exit_code": 0,
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-11",
+  "source_sha256": "92a5034a7b0b1516a51113fe7f00546e7648a9e04f3f7e1f48e284f2b89b64db"
+}

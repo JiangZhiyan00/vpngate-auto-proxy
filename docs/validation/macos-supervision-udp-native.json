@@ -1,0 +1,117 @@
+{
+  "case": "supervision",
+  "status": "passed",
+  "native_tunnel_validated": true,
+  "parallel_tunnels_validated": true,
+  "full_macos_backend_validated": false,
+  "transport": "udp",
+  "checks": {
+    "distinct_interfaces": true,
+    "distinct_indices": true,
+    "identical_internal_addresses": true,
+    "candidate_exit_identity": true,
+    "probe_unprivileged": true,
+    "supervision_channel_fault_experiment_passed": true,
+    "active_connection_survived": true,
+    "baseline_restored": true,
+    "no_new_interfaces_left": true,
+    "processes_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "index_reuse_isolation_validated": false,
+  "supervision_channel_fault_validated": true,
+  "experimental_dependency": {
+    "experimental_only": true,
+    "source_sha256": "4041c709162bec1325abf5aa8cf27a255cc477c634b15ee310411c701fc40a96",
+    "patch_sha256": "cdf11425bb5806f87eb6fb5ee289adba86e7de3c08bbe550a777785d05b986fa",
+    "binary_sha256": "b4534ecb27975e5e6c4a250554e146a0e5418d1d8440d0ca857ab45088153643"
+  },
+  "diagnostic_directory": "/private/tmp/vap-parallel-86ni3ono",
+  "interfaces": [
+    {
+      "name": "utun6",
+      "index": 34,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun7",
+      "index": 35,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun8",
+      "index": 36,
+      "address": "10.231.66.2"
+    }
+  ],
+  "supervision": {
+    "checks": {
+      "observer_worker_control_closed": true,
+      "observer_utun_descriptor_closed": true,
+      "candidate_business_dns_before_fault": true,
+      "supervisor_killed_and_reaped": true,
+      "worker_retired_without_observer_signal": true,
+      "tunnel_exited_on_management_disconnect": true,
+      "interface_removed_after_both_consumers_exit": true,
+      "candidate_business_dns_after_fault": true
+    },
+    "scope": "独立控制通道所有者强制退出后，真实隧道管理客户端与持有控制句柄的业务工作进程自行退出；观察及回收进程仍存活，不证明完整生产监督崩溃、零直连或安全重启",
+    "managed_interface": {
+      "name": "utun8",
+      "index": 36
+    },
+    "worker_probe": {
+      "event": "verified",
+      "generation": "3082c483-6b67-4d0d-8600-44b197b6cced",
+      "identity": "1c8751329ef048f9b59e571d69ce97bd",
+      "interface_index": 36,
+      "tcp": true,
+      "udp": true
+    },
+    "supervisor_exit_code": -9,
+    "worker_exit_code": 0,
+    "tunnel_exit_code": 0,
+    "automatic_exit_seconds": 0.003,
+    "retirement_ack": {
+      "event": "retired",
+      "generation": "3082c483-6b67-4d0d-8600-44b197b6cced"
+    }
+  },
+  "active_rounds": 14,
+  "activity_phases": [
+    {
+      "stage": "活动隧道建立",
+      "completed_rounds": 2
+    },
+    {
+      "stage": "候选 1 建立并验证",
+      "completed_rounds": 5
+    },
+    {
+      "stage": "候选 2 建立并验证",
+      "completed_rounds": 8
+    },
+    {
+      "stage": "候选 2 销毁",
+      "completed_rounds": 12
+    },
+    {
+      "stage": "候选 1 销毁",
+      "completed_rounds": 14
+    }
+  ],
+  "supervision_process_exit_codes": [
+    -9,
+    0
+  ],
+  "cleanup_seconds": 0.038,
+  "cleanup_errors": [],
+  "elapsed_seconds": 1.541,
+  "openvpn_exit_codes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "fixture_cleanup_errors": []
+}

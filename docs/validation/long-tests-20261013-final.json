@@ -1,0 +1,127 @@
+{
+  "recorded_at": "2026-10-13T12:52:46.554395+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "passed-for-current-isolated-container-environment",
+  "source_manifest_sha256": "5b8b0edc6c855b777a5a620403e271c78b04c673559bd184e95fc28f08661ac2",
+  "runtime_image": "sha256:9407a2daef7443ee206674cd1e82475858a0aff3f5df149c09d117707c25a73c",
+  "fixture_image": "sha256:324e40cde30dc05a9ab4a3b3e571f2b7a0bec1fd9ef9f851fee973b62ff0e156",
+  "candidates": {
+    "status": "passed",
+    "duration_seconds": 1800,
+    "integration_passed": 6,
+    "total_suite_elapsed_seconds": 1820.13,
+    "log": "candidates.log"
+  },
+  "waiting": {
+    "status": "passed",
+    "duration_seconds": 1800,
+    "integration_passed": 6,
+    "total_suite_elapsed_seconds": 1823.03,
+    "log": "waiting.log"
+  },
+  "capacity_native": {
+    "duration_seconds": 1800,
+    "actual_elapsed_seconds": 1800.9651434000116,
+    "clients": 5,
+    "connections": 50,
+    "round_trips": 64600,
+    "completed_candidate_rounds": 244,
+    "owned_resources_removed": true,
+    "network_baseline_restored": true,
+    "resource_summary": {
+      "active_with_one_candidate": {
+        "samples": 11,
+        "sampled_peak_rss_bytes": 57262080,
+        "mean_rss_bytes": 55221899.63636363,
+        "mean_cpu_percent": 2.7553044950989447
+      },
+      "active_with_two_candidates": {
+        "samples": 1,
+        "sampled_peak_rss_bytes": 74829824,
+        "mean_rss_bytes": 74829824.0,
+        "mean_cpu_percent": 36.667000960886824
+      },
+      "full_load": {
+        "samples": 1292,
+        "sampled_peak_rss_bytes": 94613504,
+        "mean_rss_bytes": 68317811.71517028,
+        "mean_cpu_percent": 3.371057536849728
+      },
+      "idle": {
+        "samples": 24,
+        "sampled_peak_rss_bytes": 49205248,
+        "mean_rss_bytes": 41637205.333333336,
+        "mean_cpu_percent": 0.7716561862759094
+      },
+      "startup": {
+        "samples": 12,
+        "sampled_peak_rss_bytes": 55500800,
+        "mean_rss_bytes": 49604949.333333336,
+        "mean_cpu_percent": 5.082592130618752
+      }
+    },
+    "environment": {
+      "system": "Linux",
+      "architecture": "aarch64",
+      "kernel": "7.0.14-orbstack-00380-ga7e0a2dc9535",
+      "binary_sha256": "e2bbb2773be103222e90141e865cec9ecd4767609a5f4e258f4acd7e7a358f05",
+      "binary_path": "/vap-target/release/vpngate-auto-proxy"
+    }
+  },
+  "capacity_docker": {
+    "duration_seconds": 1800,
+    "actual_elapsed_seconds": 1800.0986862500001,
+    "clients": 5,
+    "connections": 50,
+    "round_trips": 76300,
+    "completed_candidate_rounds": 245,
+    "owned_resources_removed": true,
+    "network_baseline_restored": null,
+    "resource_summary": {
+      "active_with_one_candidate": {
+        "samples": 7,
+        "sampled_peak_rss_bytes": 48422912,
+        "mean_rss_bytes": 48371419.428571425,
+        "mean_cpu_percent": 6.906255322849497
+      },
+      "active_with_two_candidates": {
+        "samples": 1,
+        "sampled_peak_rss_bytes": 62423040,
+        "mean_rss_bytes": 62423040.0,
+        "mean_cpu_percent": 33.675621881000986
+      },
+      "full_load": {
+        "samples": 1526,
+        "sampled_peak_rss_bytes": 66314240,
+        "mean_rss_bytes": 45693419.197903015,
+        "mean_cpu_percent": 7.151223300361853
+      },
+      "idle": {
+        "samples": 15,
+        "sampled_peak_rss_bytes": 37834752,
+        "mean_rss_bytes": 34989943.46666667,
+        "mean_cpu_percent": 8.387277878306199
+      },
+      "startup": {
+        "samples": 8,
+        "sampled_peak_rss_bytes": 49221632,
+        "mean_rss_bytes": 45947904.0,
+        "mean_cpu_percent": 12.716076285259263
+      }
+    },
+    "environment": {
+      "system": "Linux",
+      "architecture": "arm64",
+      "image_id": "sha256:9407a2daef7443ee206674cd1e82475858a0aff3f5df149c09d117707c25a73c",
+      "security_options": [
+        "name=seccomp,profile=builtin",
+        "name=cgroupns"
+      ]
+    }
+  },
+  "owned_resource_audit": "passed",
+  "native_target_validated": false,
+  "security_module_validated": false,
+  "full_macos_backend_validated": false,
+  "native_cleanup_failed_attempt_retained": true
+}

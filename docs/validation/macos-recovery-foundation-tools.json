@@ -1,0 +1,37 @@
+{
+  "recorded_at": "2026-10-13T14:15:56+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "passed-for-unprivileged-regressions",
+  "unit_passed": 282,
+  "contract_passed": 74,
+  "ignored": 36,
+  "new_shutdown_tests": 4,
+  "new_lease_tests": 6,
+  "fmt_passed": true,
+  "clippy_passed": true,
+  "build_passed": true,
+  "pool_cleanup_confirmation_required_before_runtime_cleanup": true,
+  "local_coordinator_completion_awaited": true,
+  "actual_inherited_lock_normal_exit_validated": true,
+  "actual_inherited_lock_forced_exit_validated": true,
+  "all_production_consumers_registered": false,
+  "persistent_recovery_manifest_integrated": false,
+  "full_safe_restart_validated": false,
+  "administrator_native_validated": false,
+  "full_macos_backend_validated": false,
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "program_sha256": "8290c8da6f7a63e33a578c5554c45a2693b3c5bdb10ad22ad89fc214813fddc8",
+  "source_sha256": {
+    "src/platform/lease.rs": "277a4e44c4973f257e7eda0fda0478bde024bb553fd5f70c952c570155f53757",
+    "src/platform/control.rs": "be628cbe342251dbb54e7aed50129b2e632257380c0fabeff3b22a40ac7b3fa6",
+    "src/platform/controller.rs": "6a80d142702980e194758f48340e29f74e82c0c6114fdc20cad0733c5ec165de",
+    "src/platform/pool.rs": "47e117fde9009810d3adff969fcbe7ea73a72ee40a3473370714f005c2774ec0",
+    "src/platform/mod.rs": "20e0becd3388bee9c4d5b778bedd8ed84f3d3814f953f915352e4fec149e373f"
+  },
+  "log_directory": "validation-output/macos-recovery-foundation-20261013",
+  "log_sha256": {
+    "tests.log": "2d072301a0b701a8b5067a574f2f791bafc0e328b78c640d52dad7ec07b98fc6",
+    "clippy.log": "21b3aebbb78db2131797953f2d3013aeaedaa4bea1182e043e69cbf56057eb25",
+    "build.log": "03732350ef09a21c7ed21e088a8b1ed7cc4968c4489d382fc31c4d424fbbf4da"
+  }
+}

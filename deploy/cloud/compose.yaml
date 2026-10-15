@@ -1,0 +1,30 @@
+services:
+  proxy:
+    image: ${VAP_IMAGE:?请通过 --env-file image.env 加载镜像配置}
+    pull_policy: never
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN, SYS_ADMIN, SETUID, SETGID, SETPCAP, KILL, CHOWN, DAC_OVERRIDE, FOWNER]
+    security_opt:
+      - no-new-privileges:true
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    tmpfs:
+      - /run:rw,nosuid,nodev,mode=0755
+      - /tmp:rw,nosuid,nodev,mode=1777
+    volumes:
+      - ./config.json:/etc/vap/config.json:ro
+      - proxy-data:/var/lib/vap
+    secrets:
+      - proxy_credentials
+    ports:
+      - "127.0.0.1:1080:1080"
+    stop_grace_period: 15s
+secrets:
+  proxy_credentials:
+    file: ./credentials.local.json
+volumes:
+  proxy-data:

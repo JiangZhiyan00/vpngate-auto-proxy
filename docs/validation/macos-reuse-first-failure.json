@@ -1,0 +1,103 @@
+{
+  "case": "reuse",
+  "status": "failed",
+  "native_tunnel_validated": false,
+  "parallel_tunnels_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "distinct_interfaces": true,
+    "distinct_indices": true,
+    "identical_internal_addresses": true,
+    "candidate_exit_identity": true,
+    "probe_unprivileged": true,
+    "baseline_restored": true,
+    "no_new_interfaces_left": true,
+    "processes_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "interface_index_reuse_characterized": false,
+  "index_reuse_isolation_validated": false,
+  "interfaces": [
+    {
+      "name": "utun6",
+      "index": 34,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun7",
+      "index": 35,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun8",
+      "index": 36,
+      "address": "10.231.66.2"
+    }
+  ],
+  "reuse": {
+    "checks": {
+      "old_activity_reaped_before_replacement": true,
+      "old_interface_removed": true,
+      "actual_index_reused": false
+    },
+    "scope": "旧数字索引在真实复用后的新建连接归属；不验证原套接字、代际防护或生产恢复",
+    "old_interface": {
+      "name": "utun6",
+      "index": 34,
+      "identity": "55bf10533e654aa4b67bed029d62be12"
+    },
+    "replacement_interface": {
+      "name": "utun6",
+      "index": 36,
+      "identity": "4cf0f979446747e1ab4ee7f3866a9b6b"
+    },
+    "error": "新接口未复用旧索引；本次不能验证索引复用行为"
+  },
+  "error": "新接口未复用旧索引；本次不能验证索引复用行为",
+  "cleanup_seconds": 0.038,
+  "cleanup_errors": [],
+  "elapsed_seconds": 1.139,
+  "openvpn_exit_codes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "activity_phases": [
+    {
+      "stage": "活动隧道建立",
+      "completed_rounds": 2
+    },
+    {
+      "stage": "候选 1 建立并验证",
+      "completed_rounds": 5
+    },
+    {
+      "stage": "候选 2 建立并验证",
+      "completed_rounds": 8
+    }
+  ],
+  "openvpn_errors": [
+    [
+      "2026-10-12 09:10:29 Note: --cipher is not set. OpenVPN versions before 2.5 defaulted to BF-CBC as fallback when cipher negotiation failed in this case. If you need this fallback please add '--data-ciphers-fallback BF-CBC' to your configuration and/or add BF-CBC to --data-ciphers.",
+      "2026-10-12 09:10:30 SIGTERM[hard,] received, process exiting"
+    ],
+    [
+      "2026-10-12 09:10:29 Note: --cipher is not set. OpenVPN versions before 2.5 defaulted to BF-CBC as fallback when cipher negotiation failed in this case. If you need this fallback please add '--data-ciphers-fallback BF-CBC' to your configuration and/or add BF-CBC to --data-ciphers.",
+      "2026-10-12 09:10:30 SIGTERM[hard,] received, process exiting"
+    ],
+    [
+      "2026-10-12 09:10:30 Note: --cipher is not set. OpenVPN versions before 2.5 defaulted to BF-CBC as fallback when cipher negotiation failed in this case. If you need this fallback please add '--data-ciphers-fallback BF-CBC' to your configuration and/or add BF-CBC to --data-ciphers.",
+      "2026-10-12 09:10:30 SIGTERM[hard,] received, process exiting"
+    ],
+    [
+      "2026-10-12 09:10:30 Note: --cipher is not set. OpenVPN versions before 2.5 defaulted to BF-CBC as fallback when cipher negotiation failed in this case. If you need this fallback please add '--data-ciphers-fallback BF-CBC' to your configuration and/or add BF-CBC to --data-ciphers.",
+      "2026-10-12 09:10:30 SIGTERM[hard,] received, process exiting"
+    ]
+  ],
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "evidence_origin": "用户终端执行，本地原始报告核对通过",
+  "source_sha256": "d6d3e98cb2f6324e3f0a77a300f83046f7807a602e5ee4887e0be467a732b552"
+}

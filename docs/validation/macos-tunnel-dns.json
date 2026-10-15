@@ -1,0 +1,140 @@
+{
+  "case": "dns",
+  "status": "passed",
+  "native_tunnel_validated": true,
+  "parallel_tunnels_validated": true,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "distinct_interfaces": true,
+    "distinct_indices": true,
+    "identical_internal_addresses": true,
+    "candidate_exit_identity": true,
+    "probe_unprivileged": true,
+    "active_connection_survived": true,
+    "dns_isolated_across_lifecycle": true,
+    "baseline_restored": true,
+    "no_new_interfaces_left": true,
+    "processes_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "tunnel_dns_validated": true,
+  "interfaces": [
+    {
+      "name": "utun6",
+      "index": 34,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun7",
+      "index": 35,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun8",
+      "index": 36,
+      "address": "10.231.66.2"
+    }
+  ],
+  "active_rounds": 17,
+  "activity_phases": [
+    {
+      "stage": "活动隧道建立",
+      "completed_rounds": 2
+    },
+    {
+      "stage": "候选 1 建立并验证",
+      "completed_rounds": 7
+    },
+    {
+      "stage": "候选 2 建立并验证",
+      "completed_rounds": 11
+    },
+    {
+      "stage": "候选 2 销毁",
+      "completed_rounds": 14
+    },
+    {
+      "stage": "候选 1 销毁",
+      "completed_rounds": 16
+    }
+  ],
+  "dns_phases": [
+    {
+      "stage": "隧道 0 建立后解析",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "9e11c807e5454f4fa111bdee84e075e8",
+      "interface_index": 34,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "活动隧道建立",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "9e11c807e5454f4fa111bdee84e075e8",
+      "interface_index": 34,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "隧道 1 建立后解析",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "10b1737b425c4a5faf9304d20dd24a00",
+      "interface_index": 35,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "候选 1 建立并验证",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "9e11c807e5454f4fa111bdee84e075e8",
+      "interface_index": 34,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "隧道 2 建立后解析",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "c1e1bbe1dd4d4cbca1e746539d05c760",
+      "interface_index": 36,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "候选 2 建立并验证",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "9e11c807e5454f4fa111bdee84e075e8",
+      "interface_index": 34,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "候选 2 销毁",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "9e11c807e5454f4fa111bdee84e075e8",
+      "interface_index": 34,
+      "resolved_ipv4": "10.231.66.1"
+    },
+    {
+      "stage": "候选 1 销毁",
+      "dns_tcp_fallback": true,
+      "dns_udp": true,
+      "identity": "9e11c807e5454f4fa111bdee84e075e8",
+      "interface_index": 34,
+      "resolved_ipv4": "10.231.66.1"
+    }
+  ],
+  "cleanup_seconds": 0.073,
+  "cleanup_errors": [],
+  "elapsed_seconds": 2.022,
+  "openvpn_exit_codes": [
+    0,
+    0,
+    0
+  ],
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "source_sha256": "c15d4c19e70d0dd93c4b817bed5868873ad5d71ba85c7330254b3d2f22bbe288",
+  "evidence_origin": "用户终端执行；本地原始报告核对通过"
+}

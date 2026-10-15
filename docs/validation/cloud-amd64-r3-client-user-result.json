@@ -1,0 +1,17 @@
+{
+  "reported_at": "2026-10-15",
+  "source": "用户按对话中的服务器本机测试命令，切换到第三版目录后返回的终端结果",
+  "bundle": "vpngate-cloud-amd64-20261014-r3.tar.gz",
+  "test": {
+    "client": "curl",
+    "proxy": "SOCKS5，服务器宿主回环地址 127.0.0.1:1080",
+    "authentication": "从 credentials.local.json 读取独立代理凭据，通过 curl 标准输入配置传递",
+    "remote_dns": true,
+    "target": "https://www.gstatic.com/generate_204",
+    "reported_output": "HTTP 204；curl 退出码 0",
+    "http_status": 204,
+    "curl_exit_code": 0,
+    "result": "passed"
+  },
+  "scope": "证明目标云服务器本机通过已部署第三版容器的带认证 SOCKS5 代理，完成一次真实 HTTPS 业务请求及代理端域名解析。用户只返回终端结果，未提供原始传输日志；不证明个人设备经 SSH 转发后的试用、持续稳定性或原生 Linux 部署矩阵。"
+}

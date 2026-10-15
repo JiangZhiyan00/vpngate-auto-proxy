@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "dependency-preparation",
+  "bundle": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/macos-deps/install-candidate-20261012",
+  "binary_sha256": "7619ae9d2fd7592bb834ce8bb54b790aeb2a7e7af7417caab8c08b5353d23a45",
+  "source_sha256": "4041c709162bec1325abf5aa8cf27a255cc477c634b15ee310411c701fc40a96",
+  "patch_sha256": "cdf11425bb5806f87eb6fb5ee289adba86e7de3c08bbe550a777785d05b986fa",
+  "crypto_version": "3.6.2",
+  "static_crypto_input_sha256": {
+    "libssl.a": "b99b1dcccdd5d524cb7a752b57a62c18cff85ebd12b22a00deba14d579f64c4a",
+    "libcrypto.a": "074d179c9a8361e8f9143eb89a07954f4a251061dfb98a06c53f84153ed8d1b7"
+  },
+  "system_libraries": [
+    "/usr/lib/libresolv.9.dylib",
+    "/usr/lib/libSystem.B.dylib"
+  ],
+  "default_unit_passed": 78,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "explicit_dependency_unit_passed": 3,
+  "script_passed": 13,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "admin_install_executed": false,
+  "native_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "sudo_noninteractive_available": false,
+  "scope": "普通权限构建、材料一致性核验、真实文件系统发布事务、候选拒绝与空设备管理兼容；不证明管理员安装、真实隧道或完整后端",
+  "mistaken_linux_contract_selection": {
+    "count": 3,
+    "result": "平台门槛立即拒绝，未计通过；已改用仅库内显式回归"
+  }
+}

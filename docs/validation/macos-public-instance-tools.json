@@ -1,0 +1,28 @@
+{
+  "recorded_at": "2026-10-13T13:50:35+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "passed-for-unprivileged-regressions",
+  "unit_passed": 270,
+  "contract_passed": 70,
+  "ignored": 36,
+  "new_component_tests": 3,
+  "fmt_passed": true,
+  "clippy_passed": true,
+  "build_passed": true,
+  "public_status_and_stop_component_integrated": true,
+  "os_instance_lock_validated": true,
+  "exact_runtime_cleanup_validated": true,
+  "public_run_command_enabled": false,
+  "crash_recovery_validated": false,
+  "administrator_native_validated": false,
+  "full_macos_backend_validated": false,
+  "source_sha256": "b061acba8d0c63d65e02509325445a2739e8d299cb16a399e81251fff57d90bb",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "program_sha256": "107b378c8f6f370f1a24e91b7231aac3a27dcdd2e449d844008f586c083cd68d",
+  "log_directory": "validation-output/macos-public-instance-20261013",
+  "log_sha256": {
+    "tests.log": "afe1ecbe6652dd166a384417bcf4e298fa14c1db99ec40c8f1c02b203d913158",
+    "clippy.log": "0c41663e0475032587bc927173d53bcda8cbdf9c9de0e7e700cca8549c0df7c3",
+    "build.log": "d997c07a5ff7c058933e3970f1a51bd9bb88a298a9d4111ea806bfc89d0ba230"
+  }
+}

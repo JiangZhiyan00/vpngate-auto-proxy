@@ -1,0 +1,20 @@
+{
+  "case": "macos-control-channel-components",
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "status": "passed",
+  "new_unit_tests": 11,
+  "unit_tests_passed": 232,
+  "contract_tests_passed": 67,
+  "ignored_tests": 35,
+  "fmt_check": "passed",
+  "clippy": "passed",
+  "locked_build": "passed",
+  "native_execution_performed": false,
+  "controller_process_deployment_validated": false,
+  "public_service_validated": false,
+  "full_macos_backend_validated": false,
+  "program_sha256": "bfbbf478802797def2c44778fa09adc465ea00233447c86d0628d9870fcb440c",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "logs": "validation-output/macos-control-20261013/"
+}

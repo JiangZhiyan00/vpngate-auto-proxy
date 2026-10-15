@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-15",
+  "status": "passed",
+  "image": "vpngate-auto-proxy:docker-amd64-preview-20261015",
+  "image_id": "sha256:0e3dd1761384a1c8680f91aa726e2f4312217bc7e5679a93418adec71f3299c1",
+  "binary_sha256": "6ed4f75299f746a5bab1eb71209531c40f83f3be70618d13c6940459e48c4bb5",
+  "binary_unchanged_from_r3": true,
+  "scope": "本机 ARM64 Docker 引擎上的 Linux amd64 模拟运行；最终镜像只补充声明，程序文件与已验第三版一致",
+  "checks": {
+    "rust_unit_passed": 307,
+    "rust_contract_passed": 76,
+    "rust_explicitly_ignored_target_cases": 37,
+    "rust_format_passed": true,
+    "rust_strict_clippy_passed": true,
+    "python_tests_run": 206,
+    "python_explicitly_skipped": 4,
+    "final_container_smoke_passed": true,
+    "actual_child_capabilities_checked": true,
+    "offline_source_build_passed": true,
+    "source_rebuilt_container_smoke_passed": true,
+    "source_rebuild_byte_identical": false,
+    "scoped_distribution_review_passed": true
+  },
+  "materials": {
+    "system_packages": 72,
+    "system_origins": 33,
+    "system_sources_and_patches": 253,
+    "recipe_files": 260,
+    "locked_crate_archives": 214,
+    "nested_original_notices": 392,
+    "verified_source_files": 765
+  },
+  "target_evidence": {
+    "debian12_amd64_cloud_apparmor_smoke": "已验原运行镜像及第三版相同安全策略",
+    "cloud_capacity_30_minutes": "既有独立云端报告，保留其原镜像范围",
+    "r3_cloud_exit_and_authenticated_client_requests": "已取得服务器本机及个人设备请求结果"
+  },
+  "limitations": [
+    "当前引擎未强制实施 AppArmor，云端证据按原始范围保留",
+    "断网源码重建运行通过，未达到字节完全相同的可复现构建",
+    "Linux 原生及苹果完整原生矩阵尚未完成"
+  ],
+  "publication_performed": false
+}

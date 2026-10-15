@@ -1,0 +1,21 @@
+{
+  "case": "macos-native-pipeline-tools",
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "status": "passed",
+  "native_execution_performed": false,
+  "full_macos_backend_validated": false,
+  "public_service_validated": false,
+  "unit_tests_passed": 210,
+  "contract_tests_passed": 67,
+  "ignored_tests": 35,
+  "python_tests_passed": 4,
+  "new_unit_tests": 5,
+  "new_contract_tests": 1,
+  "fmt_check": "passed",
+  "clippy": "passed",
+  "locked_build": "passed",
+  "program_sha256": "0ba625faf223fafccb52ab882ac1c5909b5883953834bfae2007b72f9ba588e7",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "logs": "validation-output/macos-native-pipeline-20261013/"
+}

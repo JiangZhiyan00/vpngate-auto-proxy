@@ -1,0 +1,22 @@
+{
+  "record_date": "2026-10-11",
+  "source": "用户终端的原生试跑结果和管理员专属日志",
+  "case": "tunnel",
+  "status": "failed",
+  "native_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "interface_removed": false,
+    "baseline_restored": true,
+    "process_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "cleanup_seconds": 0.02,
+  "cleanup_errors": [],
+  "elapsed_seconds": 0.126,
+  "fixture_cleanup_errors": [],
+  "openvpn_error": "Error: problem with tun vs. tap setting",
+  "interpretation": "证书校验及加密握手通过；设备类型初始化失败，日志未记录新隧道接口创建。原报告的接口清理字段为假不能单独解释为残留。",
+  "fix": "显式指定设备类型和原生驱动；允许内置网卡配置命令，仍禁止用户自定义脚本；报告附带有界错误摘要。",
+  "native_retry_pending": true
+}

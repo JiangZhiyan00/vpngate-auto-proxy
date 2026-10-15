@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-14",
+  "scope": "本机 ARM64 容器引擎上的 Linux amd64 镜像模拟运行，实际访问公开 VPN Gate 来源；不等于 Debian 12 云端安全策略强制实施或真实设备验收",
+  "status": "passed",
+  "source_sample": {
+    "rows_seen": 96,
+    "strict_candidates": 0,
+    "strict_unsupported": 96,
+    "explicit_compatibility_candidates": 96
+  },
+  "runtime": {
+    "state": "ready",
+    "ready": true,
+    "source_last_error": null,
+    "candidates_total": 96,
+    "round_selected": 20
+  },
+  "cleanup": {
+    "owned_containers_networks_and_volumes_removed": true
+  },
+  "checks": {
+    "rust_unit_passed": 307,
+    "rust_contract_passed": 76,
+    "python_cloud_passed": 21,
+    "python_profile_passed": 3,
+    "python_soak_passed": 13,
+    "container_smoke_passed": true,
+    "rust_format_and_strict_lint_passed": true,
+    "license_texts_verified": 304,
+    "package_file_digests_verified": 332
+  },
+  "bundle": {
+    "path": "validation-output/vpngate-cloud-amd64-20261014-r3.tar.gz",
+    "sha256": "8ec92b9d08fbb864d99813a9caf386015f120f74953ef8c571f858c8579582a9",
+    "runtime_image_id": "sha256:8f939eed845c6c482be2800f499b8d578002eea9ef5b95577b09458437a7c808"
+  },
+  "cloud_public_exit_validated": false
+}

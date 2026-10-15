@@ -1,0 +1,19 @@
+{
+  "case": "macos-active-health-components",
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "status": "passed",
+  "new_unit_tests": 11,
+  "unit_tests_passed": 221,
+  "contract_tests_passed": 67,
+  "ignored_tests": 35,
+  "fmt_check": "passed",
+  "clippy": "passed",
+  "locked_build": "passed",
+  "native_execution_performed": false,
+  "public_service_validated": false,
+  "full_macos_backend_validated": false,
+  "program_sha256": "adf1339427651acd66ec0678bbdea3af901572dc1d39681479a8432bd30df9fd",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "logs": "validation-output/macos-active-health-20261013/"
+}

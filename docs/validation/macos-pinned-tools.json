@@ -1,0 +1,54 @@
+{
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "pinned-tools",
+  "status": "passed",
+  "pinned_tunnel_fault_validated": false,
+  "native_tunnel_validated": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "pinned_lifecycle_and_ownership_tests": 8,
+    "real_dependency_boundary_tests": 5,
+    "retained_real_socket_tests": 3,
+    "generation_cleanup_tests": 7,
+    "reuse_regression_tests": 10,
+    "abrupt_regression_tests": 10,
+    "lease_regression_tests": 11,
+    "python_syntax": true,
+    "shell_syntax": true,
+    "unprivileged_native_entry_blocked": true,
+    "standard_dependency_unchanged": true
+  },
+  "experimental_dependency": {
+    "experimental_only": true,
+    "source_url": "https://swupdate.openvpn.org/community/releases/openvpn-2.6.23.tar.gz",
+    "source_sha256": "4041c709162bec1325abf5aa8cf27a255cc477c634b15ee310411c701fc40a96",
+    "patch_sha256": "cdf11425bb5806f87eb6fb5ee289adba86e7de3c08bbe550a777785d05b986fa",
+    "binary_sha256": "b4534ecb27975e5e6c4a250554e146a0e5418d1d8440d0ca857ab45088153643",
+    "license": "外部程序继续遵循其 GPL-2.0 及原有例外；补丁仅作本地实验，不构成正式依赖选型或公开分发。"
+  },
+  "fixture": {
+    "case": "pinned-fixture",
+    "status": "passed",
+    "native_tunnel_validated": false,
+    "parallel_tunnels_validated": false,
+    "full_macos_backend_validated": false,
+    "fixture_count": 3,
+    "fixture_validated": true,
+    "fixture_cleanup_errors": []
+  },
+  "fixture_source_sha256": "21422eb737f1f2c4b4e1611165d12f2d618b8edcde3561fe0f219bb2721ed3ed",
+  "scope": "本地实验补丁、描述符边界与阶段回归通过；保留控制句柄的真实原生故障阶段仍待管理员终端执行。",
+  "commands": [
+    "scripts/prepare-macos-openvpn-lease.sh",
+    "python3 scripts/test_macos_pinned.py",
+    "python3 scripts/test_macos_openvpn_lease.py",
+    "python3 scripts/test_macos_retained.py",
+    "python3 scripts/test_macos_generation.py",
+    "python3 scripts/test_macos_reuse.py",
+    "python3 scripts/test_macos_abrupt.py",
+    "python3 scripts/test_macos_lease.py",
+    "scripts/validate-macos-tunnel.sh --case pinned --fixture-only"
+  ]
+}

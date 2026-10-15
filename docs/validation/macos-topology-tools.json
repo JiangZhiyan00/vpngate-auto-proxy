@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "management-topology-material-tools",
+  "new_unit_passed": 15,
+  "default_unit_passed": 101,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "explicit_dependency_unit_passed": 3,
+  "script_passed": 15,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "production_notification_option_enabled": false,
+  "production_parent_interface_entry_integrated": false,
+  "address_configuration_implemented": false,
+  "admin_interface_creation_executed": false,
+  "native_topology_notification_validated": false,
+  "native_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "sudo_noninteractive_available": false,
+  "initial_test_failures": [
+    "有效拓扑回归在解析器未实现时失败，完成后通过",
+    "取消回归在已关闭套接字上设置截止返回参数错误，改为提前设置后通过"
+  ],
+  "scope": "有界拓扑解析、真实私有套接字会话、材料撤销与资源归属、公开入口无效句柄拒绝；不证明真实接口通知、地址配置或正式父进程接入"
+}

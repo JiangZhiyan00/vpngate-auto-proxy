@@ -1,0 +1,9 @@
+ARG RUNTIME_IMAGE
+FROM ${RUNTIME_IMAGE}
+ARG RELEASE_VERSION
+COPY LICENSE THIRD_PARTY_NOTICES.md /usr/share/licenses/vpngate-auto-proxy/
+COPY docs/third-party/rust/ /usr/share/licenses/vpngate-auto-proxy/rust/
+COPY docs/third-party/nested/ /usr/share/licenses/vpngate-auto-proxy/nested/
+COPY docs/third-party/runtime/ /usr/share/licenses/vpngate-auto-proxy/runtime/
+LABEL org.opencontainers.image.version="${RELEASE_VERSION}" \
+      io.vpngate-auto-proxy.release-scope="docker-linux-amd64"

@@ -1,0 +1,24 @@
+{
+  "record_date": "2026-10-11",
+  "source": "用户在本机终端执行并提供的只读预检结果",
+  "source_sha256": "0ecfc3de1072a1eb9dcf472bb15b1d746e8306148343ce5ccb13e81ea57f965d",
+  "status": "passed",
+  "checks": {
+    "platform": true,
+    "system_version": true,
+    "system_build": true,
+    "acceptance_target": true,
+    "openvpn_2_6": true,
+    "binary_architecture": true,
+    "dynamic_libraries": true,
+    "administrator": true,
+    "interfaces": true,
+    "routes": true,
+    "resolver": true,
+    "firewall_info": true,
+    "firewall_rules": true
+  },
+  "openvpn_sha256": "b2d5a47ed8d551d04b9d8be38da085e5b6236b3b959bad3ae02135d578b6f01e",
+  "native_tunnel_validated": false,
+  "network_details_omitted": true
+}
