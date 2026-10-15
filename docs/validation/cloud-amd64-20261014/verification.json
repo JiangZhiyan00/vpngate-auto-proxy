@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "source_directory": "/Users/jiangzhiyan/Downloads/13.211.154.1/202610141518",
+  "status": "passed",
+  "checks": {
+    "formal_duration": true,
+    "expected_load": true,
+    "candidate_rounds": true,
+    "resources_removed": true,
+    "wrapper_exit": true,
+    "native_driver": true,
+    "runtime_identity": true,
+    "security_environment": true,
+    "round_trip_count": true,
+    "summary_active_with_one_candidate": true,
+    "summary_active_with_two_candidates": true,
+    "summary_full_load": true,
+    "summary_idle": true,
+    "summary_startup": true
+  },
+  "source_files_sha256": {
+    "environment.json": "8b9611ae15dbe59d7a30bb4a1271f9dcfb02351db3bc68db04206c30125a814a",
+    "capacity-result.json": "9676cb7fdaed1691e8aeb2a9c6223e003dfd13ecfee56c42cd20ce860d1a7ad3",
+    "soak-cloud.json": "9afbd2100ef43e33999923c219df17de0cf13781f21fc2e2483a68205a6b15f1"
+  },
+  "samples": 1482,
+  "full_log_received": false,
+  "host_network_baseline_measured": false,
+  "scope": "云端 x86_64 容器受控三十分钟容量；不涵盖原生进程部署、真实设备或公共节点"
+}

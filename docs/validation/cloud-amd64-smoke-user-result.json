@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "reported_date": "2026-10-14",
+  "evidence_type": "user_reported_terminal_output",
+  "status": "passed",
+  "case": "smoke",
+  "environment": {
+    "distribution": "Debian GNU/Linux 12 (bookworm)",
+    "architecture": "x86_64",
+    "kernel": "7.2.8",
+    "docker_engine": "29.8.1",
+    "containerd": "2.3.6",
+    "runc": "1.5.1",
+    "apparmor_enforcing": true
+  },
+  "reported_log_path": "validation-output/smoke-20261014-142430.log",
+  "reported_checks": [
+    "认证", "状态", "只读容器运行", "停止", "缓存原时间保留",
+    "来源失败时替换容器重新验证", "故障阻断与恢复",
+    "默认回环", "存活检查", "缺少能力诊断"
+  ],
+  "last_applied_patch": "cloud-product-proc-mount-fix.py",
+  "full_log_received": false,
+  "capacity_30_minutes_validated": false,
+  "linux_native_deployment_matrix_completed": false,
+  "macos_native_validation_deferred": true
+}

@@ -1,0 +1,139 @@
+{
+  "case": "generation",
+  "status": "passed",
+  "native_tunnel_validated": true,
+  "parallel_tunnels_validated": true,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "distinct_interfaces": true,
+    "distinct_indices": true,
+    "identical_internal_addresses": true,
+    "candidate_exit_identity": true,
+    "probe_unprivileged": true,
+    "controlled_generation_experiment_passed": true,
+    "active_connection_survived_before_fault": true,
+    "baseline_restored": true,
+    "no_new_interfaces_left": true,
+    "processes_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "controlled_generation_retirement_validated": true,
+  "index_reuse_isolation_validated": false,
+  "interfaces": [
+    {
+      "name": "utun6",
+      "index": 34,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun7",
+      "index": 35,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun8",
+      "index": 36,
+      "address": "10.231.66.2"
+    }
+  ],
+  "generation": {
+    "checks": {
+      "old_worker_exited_before_interface_release": true,
+      "actual_reuse_and_different_exit_verified": true,
+      "distinct_generation_ids": true,
+      "old_generation_rejected": true,
+      "replacement_generation_verified": true,
+      "replacement_worker_exited_normally": true
+    },
+    "scope": "受控旧工作进程退出后释放接口，实际复用后新工作进程拒绝旧代际；不验证外部重建竞争、零直连或生产恢复",
+    "old_generation": "28500537-fbd1-40f0-812e-37861ea1a60d",
+    "old_worker_probe": {
+      "event": "verified",
+      "generation": "28500537-fbd1-40f0-812e-37861ea1a60d",
+      "identity": "94a199089af1446fb10807a93ea863bd",
+      "interface_index": 36,
+      "tcp": true,
+      "udp": true
+    },
+    "retirement_ack": {
+      "event": "retired",
+      "generation": "28500537-fbd1-40f0-812e-37861ea1a60d"
+    },
+    "reuse": {
+      "checks": {
+        "old_activity_reaped_before_replacement": true,
+        "old_interface_removed": true,
+        "actual_index_reused": true,
+        "cached_numeric_index_reaches_replacement": true,
+        "replacement_business_dns_verified": true,
+        "candidate_1_business_dns_verified": true
+      },
+      "scope": "旧数字索引在真实复用后的新建连接归属；不验证原套接字、代际防护或生产恢复",
+      "old_interface": {
+        "name": "utun8",
+        "index": 36,
+        "identity": "94a199089af1446fb10807a93ea863bd"
+      },
+      "target_role": "第三条原隧道；创建替代接口前固定目标索引",
+      "replacement_interface": {
+        "name": "utun6",
+        "index": 36,
+        "identity": "5945cf610fc54e479cb98ca4541a0547"
+      },
+      "cached_numeric_index_observation": {
+        "identity": "5945cf610fc54e479cb98ca4541a0547",
+        "interface_index": 36,
+        "round": 1,
+        "tcp": true,
+        "udp": true
+      }
+    },
+    "replacement_generation": "7e199995-097b-4b60-81a3-c19da7de5147",
+    "old_generation_request": {
+      "event": "rejected",
+      "generation": "7e199995-097b-4b60-81a3-c19da7de5147",
+      "reason": "stale_generation"
+    },
+    "replacement_worker_probe": {
+      "event": "verified",
+      "generation": "7e199995-097b-4b60-81a3-c19da7de5147",
+      "identity": "5945cf610fc54e479cb98ca4541a0547",
+      "interface_index": 36,
+      "tcp": true,
+      "udp": true
+    }
+  },
+  "active_rounds": 10,
+  "activity_phases": [
+    {
+      "stage": "活动隧道建立",
+      "completed_rounds": 2
+    },
+    {
+      "stage": "候选 1 建立并验证",
+      "completed_rounds": 6
+    },
+    {
+      "stage": "候选 2 建立并验证",
+      "completed_rounds": 9
+    }
+  ],
+  "generation_worker_exit_codes": [
+    0,
+    0
+  ],
+  "cleanup_seconds": 0.054,
+  "cleanup_errors": [],
+  "elapsed_seconds": 2.703,
+  "openvpn_exit_codes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "evidence_origin": "用户终端执行，本地原始报告核对通过",
+  "source_sha256": "153f61f2a006695da0843e1d53a45e982558844aec9290227b4c4b2445981920"
+}

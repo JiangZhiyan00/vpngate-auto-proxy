@@ -1,0 +1,20 @@
+{
+  "case": "macos-source-coordinator-components",
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "status": "passed",
+  "new_unit_tests": 15,
+  "unit_tests_passed": 254,
+  "contract_tests_passed": 68,
+  "ignored_tests": 36,
+  "fmt_check": "passed",
+  "clippy": "passed",
+  "locked_build": "passed",
+  "actual_controller_process_deployment_validated": false,
+  "public_gateway_validated": false,
+  "full_macos_backend_validated": false,
+  "program_sha256": "6c9a20cf818ae3e186c3408e69b7cedd55220406714a61e9bf8e51337b87e9a0",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "logs": "validation-output/macos-coordinator-20261013/",
+  "long_run_directory": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/long-run-20261013-backoff-2e41c2c2"
+}

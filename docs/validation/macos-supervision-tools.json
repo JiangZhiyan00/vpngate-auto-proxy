@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-12T14:08:33.625296+08:00",
+  "case": "supervision-tools",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "supervision_channel_fault_validated": false,
+  "full_macos_backend_validated": false,
+  "tests": {
+    "supervision_regressions_passed": 17,
+    "all_macos_script_regressions_passed": 135,
+    "all_macos_script_regressions_seconds": 25.93,
+    "examples_build": "passed",
+    "python_syntax": "passed",
+    "unprivileged_openvpn_management_hold_disconnect": "passed",
+    "real_worker_control_disconnect": "passed"
+  },
+  "native_preflight": {
+    "status": "blocked",
+    "administrator": false,
+    "host_interfaces_created": false
+  },
+  "experimental_dependency": {
+    "experimental_only": true,
+    "source_sha256": "4041c709162bec1325abf5aa8cf27a255cc477c634b15ee310411c701fc40a96",
+    "patch_sha256": "cdf11425bb5806f87eb6fb5ee289adba86e7de3c08bbe550a777785d05b986fa",
+    "binary_sha256": "b4534ecb27975e5e6c4a250554e146a0e5418d1d8440d0ca857ab45088153643"
+  },
+  "source_sha256": {
+    "scripts/macos_supervision.py": "d8b25df82f678702216dc7d7617173fed99de5ab09856d5f75c519fa316cade2",
+    "scripts/test_macos_supervision.py": "f50c933ce0276f14247d173dab3d40eff1649684d7c1d13eb826f643acb0ba19",
+    "scripts/macos_parallel.py": "bb6ca4a5d5c50d13cd7c0d8ae6f6550c3d8f73d26ae0f743bb1ab6dc4ea34097",
+    "scripts/macos_tunnel.py": "1fa143079804fcea677d44afad6cb60151bc714c68fdc154ebcb2deb54148d6f"
+  }
+}

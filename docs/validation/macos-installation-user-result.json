@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "user_reports_both_installations_succeeded": true,
+  "program_installed_path": "/Library/Application Support/vpngate-auto-proxy-programs/0.1.0-9b2fc96d5df783455774bc5fa697772474558a67a5bd40e5449251bc5d3a1b5b/vpngate-auto-proxy",
+  "program_installed_sha256": "9b2fc96d5df783455774bc5fa697772474558a67a5bd40e5449251bc5d3a1b5b",
+  "program_record_matches_worktree_binary": true,
+  "program_root_ownership_and_permissions_verified": true,
+  "dependency_installation_user_reported": true,
+  "dependency_installation_independently_verified": false,
+  "dependency_manifest_expected_path": "/Library/Application Support/vpngate-auto-proxy/dependencies/openvpn-2.6.23-7619ae9d2fd7592bb834ce8bb54b790aeb2a7e7af7417caab8c08b5353d23a45/dependency.json",
+  "dependency_verification_limitation": "管理员私有目录按预期拒绝普通用户读取，本会话未核对其中的安装清单与文件摘要。",
+  "service_started": false,
+  "native_generation_or_routing_validated": false,
+  "full_macos_backend_validated": false
+}

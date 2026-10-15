@@ -1,0 +1,60 @@
+# 仅供隔离受控夹具使用；不用于实际代理服务。
+#include <tunables/global>
+profile vpngate-auto-proxy-fixture flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  / r,
+  /** r,
+  /{bin,sbin,usr/bin,usr/sbin,usr/local/bin}/** mrix,
+  /workspace/tests/fixtures/{setup.sh,cleanup.sh} rix,
+  /{lib,lib64,usr/lib}/** mr,
+  /dev/null rw,
+  /dev/net/tun rw,
+  /run/** rwkl,
+  /tmp/** rwkl,
+  /proc/sys/net/ipv4/ip_unprivileged_port_start w,
+
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+  network unix stream,
+  network unix dgram,
+  network netlink raw,
+  deny network packet,
+  deny network inet raw,
+  deny network inet6 raw,
+
+  capability net_admin,
+  capability sys_admin,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  capability kill,
+  capability chown,
+  capability dac_override,
+  capability fowner,
+  signal (send) peer=vpngate-auto-proxy-fixture,
+  signal (receive),
+  ptrace (read,readby) peer=vpngate-auto-proxy-fixture,
+
+  mount options=(rw,rbind) /run/netns/ -> /run/netns/,
+  mount options=(rw,bind) /run/netns/ -> /run/netns/,
+  mount options=(rw,rshared) -> /run/netns/,
+  mount options=(rw,shared) -> /run/netns/,
+  mount options=(rw,bind) /proc/{self,thread-self,[0-9]*}/ns/net -> /run/netns/vap_*,
+  # 此内核将命名空间文件的绑定挂载源报告为 /；目标仅限受控夹具。
+  mount options=(rw,bind) / -> /run/netns/vap_fixture,
+  mount options=(rw,rprivate) -> /,
+  mount options=(rw,rslave) -> /,
+  # ip netns exec 在新建的私有挂载空间中刷新网络命名空间的 sysfs。
+  umount /sys/,
+  mount fstype=sysfs options=(rw) -> /sys/,
+  mount fstype=sysfs options=(ro) -> /sys/,
+  mount fstype=proc -> /proc/,
+  umount /run/netns/vap_*,
+  umount /proc/,
+
+  deny /proc/{mem,kmem,kcore,sysrq-trigger} rwklx,
+  deny /sys/firmware/** rwklx,
+  deny /sys/kernel/security/** rwklx,
+}

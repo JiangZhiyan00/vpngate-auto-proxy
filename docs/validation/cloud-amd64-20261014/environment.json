@@ -1,0 +1,38 @@
+{
+  "recorded_at": "2026-10-14T14:27:35.973085+08:00",
+  "system": "Linux",
+  "machine": "x86_64",
+  "kernel": "7.2.8",
+  "os_release": "PRETTY_NAME=\"Debian GNU/Linux 12 (bookworm)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"12\"\nVERSION=\"12 (bookworm)\"\nVERSION_CODENAME=bookworm\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+  "docker": "29.8.1",
+  "security_options": [
+    "name=apparmor,profile=default",
+    "name=seccomp,profile=builtin",
+    "name=cgroupns"
+  ],
+  "cgroup_version": "2",
+  "images": [
+    {
+      "tag": "vpngate-auto-proxy:cloud-amd64-20261014",
+      "id": "sha256:28114d2dbe11ca0ee2f3c174eb43a0d1bcbc5c01321f595fcbdca619a24d0d9b",
+      "architecture": "amd64",
+      "os": "linux",
+      "observed_id": "sha256:4777dd6426f83e619fe9e505bec4a2d3b5966339a5856309046f4ae1b947c305",
+      "verified_ids": [
+        "sha256:28114d2dbe11ca0ee2f3c174eb43a0d1bcbc5c01321f595fcbdca619a24d0d9b",
+        "sha256:4777dd6426f83e619fe9e505bec4a2d3b5966339a5856309046f4ae1b947c305"
+      ]
+    },
+    {
+      "tag": "vpngate-auto-proxy-fixture:cloud-amd64-20261014",
+      "id": "sha256:868461daa06a949e2040ad888801c9aecc0067b75a6abc82e64e3917a3f6ce18",
+      "architecture": "amd64",
+      "os": "linux",
+      "observed_id": "sha256:cdfa41488d609d63078368ce32826f413771b11dbbf47c5d3afe93e1e8d18f35",
+      "verified_ids": [
+        "sha256:868461daa06a949e2040ad888801c9aecc0067b75a6abc82e64e3917a3f6ce18",
+        "sha256:cdfa41488d609d63078368ce32826f413771b11dbbf47c5d3afe93e1e8d18f35"
+      ]
+    }
+  ]
+}

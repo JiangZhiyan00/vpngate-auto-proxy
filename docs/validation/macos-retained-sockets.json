@@ -1,0 +1,87 @@
+{
+  "case": "retained",
+  "status": "passed",
+  "native_tunnel_validated": true,
+  "parallel_tunnels_validated": true,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "distinct_interfaces": true,
+    "distinct_indices": true,
+    "identical_internal_addresses": true,
+    "candidate_exit_identity": true,
+    "probe_unprivileged": true,
+    "retained_echo_experiment_passed": true,
+    "active_connection_survived_before_fault": true,
+    "baseline_restored": true,
+    "no_new_interfaces_left": true,
+    "processes_reaped": true,
+    "cleanup_within_15_seconds": true
+  },
+  "retained_echo_blocking_validated": true,
+  "interfaces": [
+    {
+      "name": "utun6",
+      "index": 34,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun7",
+      "index": 35,
+      "address": "10.231.66.2"
+    },
+    {
+      "name": "utun8",
+      "index": 36,
+      "address": "10.231.66.2"
+    }
+  ],
+  "retained": {
+    "checks": {
+      "original_tcp_udp_verified": true,
+      "interface_removed_with_probe_alive": true,
+      "retained_tcp_no_response_in_2_seconds": true,
+      "retained_udp_no_response_in_2_seconds": true,
+      "retained_probe_exited_normally": true,
+      "candidate_1_business_dns_survived": true,
+      "candidate_2_business_dns_survived": true
+    },
+    "scope": "原套接字在接口销毁后两秒内无响应；不证明零直连、索引复用或生产故障恢复",
+    "retained_socket_observation": {
+      "identity": "17d194d2e4ef4eebbb98f4ad806ffcbb",
+      "interface_index": 34,
+      "retained_tcp_response": false,
+      "retained_tcp_write_succeeded": true,
+      "retained_udp_response": false,
+      "retained_udp_send_succeeded": false
+    },
+    "probe_reaped": true
+  },
+  "active_rounds": 9,
+  "activity_phases": [
+    {
+      "stage": "活动隧道建立",
+      "completed_rounds": 2
+    },
+    {
+      "stage": "候选 1 建立并验证",
+      "completed_rounds": 5
+    },
+    {
+      "stage": "候选 2 建立并验证",
+      "completed_rounds": 9
+    }
+  ],
+  "cleanup_seconds": 0.036,
+  "cleanup_errors": [],
+  "elapsed_seconds": 3.446,
+  "openvpn_exit_codes": [
+    0,
+    0,
+    0
+  ],
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "evidence_origin": "用户终端执行，本地原始报告核对通过",
+  "source_sha256": "250b4dc692dd63c0bda3c1435328c85e968c7f065d20868a4a61c8f1120eaa4a"
+}

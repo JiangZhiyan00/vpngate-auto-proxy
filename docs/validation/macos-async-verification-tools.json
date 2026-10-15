@@ -1,0 +1,22 @@
+{
+  "case": "macos-async-verification-components",
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "status": "passed",
+  "new_unit_tests": 7,
+  "unit_tests_passed": 239,
+  "contract_tests_passed": 68,
+  "ignored_tests": 36,
+  "fmt_check": "passed",
+  "clippy": "passed",
+  "locked_build": "passed",
+  "native_execution_performed": false,
+  "public_service_validated": false,
+  "full_macos_backend_validated": false,
+  "program_sha256": "5b045256221e36624318ab8f7ae505d708b85b045a11c3c0c4098761ff3dbca9",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "logs": "validation-output/macos-async-verification-20261013/",
+  "source_backoff_short_regression": "passed-in-isolated-linux",
+  "long_test_status": "fixed-build-matrix-running",
+  "long_run_directory": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/long-run-20261013-backoff-2e41c2c2"
+}

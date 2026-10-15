@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "generation-lifecycle-tools",
+  "new_unit_passed": 9,
+  "default_unit_passed": 173,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "unsafe_code_added": false,
+  "dependencies_added": false,
+  "production_bootstrap_connected": true,
+  "ordinary_production_permission_gate_validated": true,
+  "cancelled_wait_resumes_same_task_validated": true,
+  "owned_material_closed_before_cleanup_wait_validated": true,
+  "drop_keeps_cleanup_future_running_validated": true,
+  "supervisor_panic_revokes_delivered_token_validated": true,
+  "public_service_integrated": false,
+  "candidate_exit_verification_integrated": false,
+  "native_root_generation_validated": false,
+  "full_macos_backend_validated": false,
+  "complete_resource_recovery_manifest_implemented": false,
+  "thirty_minute_validation_executed": false,
+  "program_binary_sha256": "c19119bd1871ff7061ac1b110dafd50a4f51d4df2d69799fdea3a6b7f7ff46ae",
+  "test_logs": {
+    "lifecycle-tests.log": "0a5c6d5eca0bae280ef2d770f575711863137e0ec68df20d55844b21338f73d8",
+    "all-tests.log": "05d8dcf05a6bb3f3a46a7d31c9d05d98accb12dfb674befe5b0ce4a05da049f4"
+  }
+}

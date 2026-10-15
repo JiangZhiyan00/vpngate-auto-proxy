@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "network_disabled_for_compilation": true,
+  "binary_sha256": {
+    "vpngate-auto-proxy:cloud-amd64-20261014-r3": "6ed4f75299f746a5bab1eb71209531c40f83f3be70618d13c6940459e48c4bb5",
+    "vpngate-auto-proxy:source-rebuilt-runtime-test-only": "031ac4411013d8c758ff4a8a0bd08ba046f397ccd66101a250fdd069a4380fb4"
+  },
+  "byte_identical": false,
+  "source_rebuilt_smoke_passed": true
+}

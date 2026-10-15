@@ -1,0 +1,12 @@
+{
+  "case": "parallel-fixture",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "parallel_tunnels_validated": false,
+  "full_macos_backend_validated": false,
+  "fixture_count": 3,
+  "fixture_validated": true,
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-11",
+  "source_sha256": "76d1a00d96d7e4f5dc6b6de8117cd3284f468eff1a0d9447a7049d865da24dd0"
+}

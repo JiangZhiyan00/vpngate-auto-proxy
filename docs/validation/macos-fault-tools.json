@@ -1,0 +1,28 @@
+{
+  "case": "fault-fixture",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "parallel_tunnels_validated": false,
+  "full_macos_backend_validated": false,
+  "fixture_count": 3,
+  "fixture_validated": true,
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "source_sha256": "0c89cd4625c8cf38ff1f398c3bffacc8a520a79a3ed0bdefab84a3736147f212",
+  "tunnel_fault_validated": false,
+  "validation": {
+    "guard_socket_tests_passed": 2,
+    "capture_evidence_tests_passed": 6,
+    "existing_dns_echo_tests_passed": 11,
+    "unit_tests_passed": 13,
+    "contract_tests_passed": 44,
+    "privileged_tests_not_executed": 32,
+    "format": "passed",
+    "strict_static_analysis": "passed",
+    "python_syntax": "passed",
+    "native_stage": "blocked_by_administrator_preflight",
+    "long_running_tests": "deferred"
+  },
+  "scope": "工具、回环套接字及远端夹具验证；原生隧道故障及抓包尚未执行"
+}

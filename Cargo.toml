@@ -1,0 +1,54 @@
+[package]
+name = "vpngate-auto-proxy"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.90"
+license = "MIT"
+description = "自动获取并隔离验证 VPNGate 节点的局域网代理"
+publish = false
+
+[dependencies]
+anyhow = "1"
+native-tls = "0.2"
+base64 = "0.22"
+blake3 = "1"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = { version = "0.10", features = ["serde"] }
+clap = { version = "4", features = ["derive"] }
+csv = "1"
+fs2 = "0.4"
+futures-util = "0.3"
+rand = "0.9"
+reqwest = { version = "0.12", default-features = false, features = ["native-tls", "socks", "stream", "json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+subtle = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["full", "test-util"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url = { version = "2", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+zeroize = { version = "1", features = ["derive"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nix = { version = "=0.31.3", default-features = false, features = ["net", "fs", "user", "ioctl"] }
+socket2 = { version = "0.6.5", features = ["all"] }
+unix-ancillary = "=0.6.1"
+rustix = { version = "=1.1.5", features = ["fs", "process"] }
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+rustix = { version = "=1.1.5", features = ["net"] }
+
+[dev-dependencies]
+proptest = "1"
+tempfile = "3"
+
+[lints.rust]
+unsafe_code = "deny"
+
+[profile.release]
+lto = "thin"
+strip = true

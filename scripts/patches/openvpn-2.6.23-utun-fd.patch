@@ -1,0 +1,55 @@
+--- a/src/openvpn/tun.c
++++ b/src/openvpn/tun.c
+@@ -3321,6 +3321,44 @@
+     int utunnum = -1;
+     socklen_t utunname_len = sizeof(utunname);
+ 
++    /* 本地实验扩展：借用父进程明确继承的 utun 控制描述符。 */
++    if (dev_node && strncmp(dev_node, "utun-fd:", 8) == 0)
++    {
++        const char *number = dev_node + 8;
++        char *end = NULL;
++        errno = 0;
++        long inherited = strtol(number, &end, 10);
++        if (!*number || *number < '0' || *number > '9' || *end
++            || errno || inherited < 3 || inherited > INT_MAX)
++        {
++            msg(M_FATAL, "实验隧道描述符参数无效");
++        }
++        fd = dup((int) inherited);
++        if (fd < 0)
++        {
++            msg(M_ERR | M_ERRNO, "实验隧道描述符无法复制");
++        }
++        close((int) inherited);
++        int socket_type = 0;
++        socklen_t type_len = sizeof(socket_type);
++        CLEAR(utunname);
++        if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &socket_type, &type_len)
++            || socket_type != SOCK_DGRAM
++            || getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, utunname, &utunname_len)
++            || utunname_len < 6 || utunname_len > sizeof(utunname)
++            || utunname[utunname_len - 1] != 0
++            || strncmp(utunname, "utun", 4) != 0
++            || strspn(utunname + 4, "0123456789") != strlen(utunname + 4))
++        {
++            msg(M_FATAL, "实验隧道描述符不是有效控制接口");
++        }
++        utunname_len = sizeof(utunname);
++        set_cloexec(fd);
++        set_nonblock(fd);
++        msg(M_INFO, "实验隧道已借用继承描述符");
++        goto utun_descriptor_ready;
++    }
++
+     /* dev_node is simply utun, do the normal dynamic utun
+      * otherwise try to parse the utun number */
+     if (dev_node && (strcmp("utun", dev_node) != 0 ))
+@@ -3367,6 +3405,7 @@
+         fd = utun_open_helper(ctlInfo, utunnum);
+     }
+ 
++utun_descriptor_ready:
+     /* opening an utun device failed */
+     tt->fd = fd;
+ 

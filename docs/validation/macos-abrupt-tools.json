@@ -1,0 +1,44 @@
+{
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "abrupt-tools",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "abrupt_retained_characterized": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "abrupt_lifecycle_and_evidence_tests": 10,
+    "retained_real_socket_tests": 3,
+    "reuse_regression_tests": 10,
+    "generation_cleanup_regression_tests": 7,
+    "format_check": true,
+    "strict_static_check": true,
+    "python_syntax": true,
+    "unprivileged_native_entry_blocked": true,
+    "existing_probe_identity_tests": 3
+  },
+  "fixture": {
+    "case": "abrupt-fixture",
+    "status": "passed",
+    "native_tunnel_validated": false,
+    "parallel_tunnels_validated": false,
+    "full_macos_backend_validated": false,
+    "fixture_count": 3,
+    "fixture_validated": true,
+    "fixture_cleanup_errors": []
+  },
+  "fixture_source_sha256": "5c86f1604aabcb9df932664bc3c23360545d9be086226df92de2eb7a3246856c",
+  "scope": "仅工具及受控远端夹具通过；异常退出、原套接字保留和真实索引复用的组合仍待原生验证；不证明零直连",
+  "commands": [
+    "cargo build --locked --example macos_tunnel_probe",
+    "python3 scripts/test_macos_abrupt.py",
+    "python3 scripts/test_macos_retained.py",
+    "python3 scripts/test_macos_generation.py",
+    "python3 scripts/test_macos_probe.py",
+    "python3 scripts/test_macos_reuse.py",
+    "scripts/validate-macos-tunnel.sh --case abrupt --fixture-only",
+    "cargo fmt --check",
+    "cargo clippy --locked --all-targets -- -D warnings"
+  ]
+}

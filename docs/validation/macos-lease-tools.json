@@ -1,0 +1,36 @@
+{
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "lease-tools",
+  "status": "passed",
+  "interface_lifetime_validated": false,
+  "native_tunnel_validated": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "lifecycle_and_real_descriptor_tests": 11,
+    "python_syntax": true,
+    "shell_syntax": true,
+    "target_sdk_abi_verified": true,
+    "unprivileged_native_entry_blocked": true,
+    "unprivileged_control_address_query_errno": 102
+  },
+  "target_sdk_abi": {
+    "control_info_size": 100,
+    "control_address_size": 32,
+    "control_id_offset": 4,
+    "control_unit_offset": 8,
+    "lookup_ioctl": 3227799043,
+    "system_family": 32,
+    "control_protocol": 2,
+    "control_subaddress": 2,
+    "ifname_option": 2
+  },
+  "scope": "修正控制单元分配及借用描述符包装后的工具验证；原生生命周期仍待终端重试。",
+  "commands": [
+    "python3 scripts/test_macos_lease.py",
+    "python3 -m compileall -q scripts/macos_lease.py scripts/test_macos_lease.py",
+    "sh -n scripts/validate-macos-lease.sh",
+    "scripts/validate-macos-lease.sh --native"
+  ]
+}

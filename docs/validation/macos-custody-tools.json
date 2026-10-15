@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-12",
+  "case": "custody-tools",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "business_custody_fault_validated": false,
+  "index_reuse_isolation_validated": false,
+  "full_macos_backend_validated": false,
+  "checks": {
+    "阶段及归属回归": 16,
+    "实验依赖边界回归": 5,
+    "异常退出回归": 10,
+    "句柄生命周期回归": 11,
+    "代际清理回归": 7,
+    "真实复用工具回归": 10,
+    "真实保留套接字回归": 4
+  },
+  "total_tests": 63,
+  "actual_descriptor_test": "真实业务探针继承控制描述符；编排方关闭本地副本、另一持有子进程被强制终止并回收后，对端仍无结束标志；探针退出后对端收到结束标志。该回环套接字证据不替代原生隧道。",
+  "fixture_report": "validation-output/macos-parallel-nbln5mao/report.json",
+  "fixture_count": 3,
+  "fixture_cleanup_errors": [],
+  "native_preflight": {
+    "status": "blocked",
+    "administrator": false,
+    "network_mutations": false
+  },
+  "experimental_dependency": {
+    "experimental_only": true,
+    "source_sha256": "4041c709162bec1325abf5aa8cf27a255cc477c634b15ee310411c701fc40a96",
+    "patch_sha256": "cdf11425bb5806f87eb6fb5ee289adba86e7de3c08bbe550a777785d05b986fa",
+    "binary_sha256": "b4534ecb27975e5e6c4a250554e146a0e5418d1d8440d0ca857ab45088153643"
+  },
+  "scope": "仅工具、回环描述符和远端夹具通过；真实受控持有者及隧道进程双重故障尚未原生执行，不代表生产监督进程崩溃安全。"
+}

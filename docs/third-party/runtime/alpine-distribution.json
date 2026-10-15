@@ -1,0 +1,570 @@
+{
+  "schema_version": 1,
+  "source_image_id": "sha256:960ccc2f98935ef1142fb1857a99ad98f5a5cbd69283d2101fb048173fed4c11",
+  "status": "passed",
+  "linked_libraries": " TYPE   NEEDED FILE \nET_DYN libssl.so.3,libcrypto.so.3,libgcc_s.so.1,libc.musl-x86_64.so.1 /usr/local/bin/vpngate-auto-proxy \n",
+  "library_package_ownership": "/usr/lib/libssl.so.3 is owned by libssl3-3.5.8-r0\n/usr/lib/libcrypto.so.3 is owned by libcrypto3-3.5.8-r0\n/usr/lib/libgcc_s.so.1 is owned by libgcc-14.2.0-r6\n/lib/libc.musl-x86_64.so.1 is owned by musl-1.2.5-r12\n",
+  "system_origins": 33,
+  "notices": [
+    {
+      "path": "docs/third-party/runtime/alpine/apk-tools/apk-tools-v2.14.12.tar.gz/apk-tools-v2.14.12/AUTHORS",
+      "sha256": "c238557e70557a79ea0ac30ea6d05342144f02b07ae4e9988171f70de3d66f2e"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/apk-tools/apk-tools-v2.14.12.tar.gz/apk-tools-v2.14.12/LICENSE",
+      "sha256": "b3c87315aae4c9f276c37168f2655dd8bd990544d7a0bbfb929664155c7ab257"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/busybox/busybox-1.37.0.tar.bz2/busybox-1.37.0/AUTHORS",
+      "sha256": "384fc3a9cfc7c435bdd9d169e5ec60a7d898d9ef9557ec859394d7f97b4b6f07"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/busybox/busybox-1.37.0.tar.bz2/busybox-1.37.0/LICENSE",
+      "sha256": "bbfc9843646d483c334664f651c208b9839626891d8f17604db2146962f43548"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/busybox/busybox-1.37.0.tar.bz2/busybox-1.37.0/archival/libarchive/bz/LICENSE",
+      "sha256": "b5a136ed67798e51fe2e0ca0b2a21cb01b904ff0c9f7d563a6292e276607e58f"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/elfutils/elfutils-0.193.tar.bz2/elfutils-0.193/doc/COPYING-GFDL",
+      "sha256": "62b0aef0fcad4d041e9de52278b2dcbbf999fe0650fa162f37a25cfd969cf4dd"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/elfutils/elfutils-0.193.tar.bz2/elfutils-0.193/COPYING-LGPLV3",
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/elfutils/elfutils-0.193.tar.bz2/elfutils-0.193/COPYING-GPLV2",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/elfutils/elfutils-0.193.tar.bz2/elfutils-0.193/COPYING",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/elfutils/elfutils-0.193.tar.bz2/elfutils-0.193/AUTHORS",
+      "sha256": "a12e829266d6f307c952720e80df170834f28f369e30753fae6568b7887ef90f"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/COPYING.LIB",
+      "sha256": "a9bdde5616ecdd1e980b44f360600ee8783b1f99b8cc83a2beb163a0a390e861"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libquadmath/COPYING.LIB",
+      "sha256": "32434afcc8666ba060e111d715bfdb6c2d5dd8a35fa4d3ab8ad67d8f850d2f2b"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libgo/go/golang.org/x/mod/LICENSE",
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libgo/go/golang.org/x/xerrors/LICENSE",
+      "sha256": "84d554e7a5d139b7c7b5d6ef0670ae556c4cdcfa354eaad72a1c07c08012c96f"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libgo/go/golang.org/x/tools/LICENSE",
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libgo/go/golang.org/x/sync/AUTHORS",
+      "sha256": "b82446c166daa6932dc33418961ed7a7f06c5a9fee17e9d214e16079e3442757"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libgo/go/golang.org/x/sync/LICENSE",
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libgo/LICENSE",
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libstdc++-v3/include/pstl/LICENSE.txt",
+      "sha256": "0ca8cbe9219a841f9bc8fbb1f8ecdf5e39b1b0e23ee10fb6b0c090d8987dd1eb"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libstdc++-v3/doc/xml/authors.xml",
+      "sha256": "5300074c44853ce8f728eef46916a8d428edf8147a48f4903a97e43f69d6c2d3"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libstdc++-v3/doc/html/manual/license.html",
+      "sha256": "2906eca1abfe0c78daea99197a6eb130603c2dac4aa8cd7863526ea52cd3f030"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/zlib/contrib/dotzlib/LICENSE_1_0.txt",
+      "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libphobos/src/LICENSE_1_0.txt",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libphobos/libdruntime/LICENSE.txt",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libcody/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/contrib/unicode/unicode-license.txt",
+      "sha256": "72a95a3930bf6fc1961c08c3011321d294c5d9ee9c5d10b535c1afca15287fba"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/contrib/update-copyright.py",
+      "sha256": "e940e984b5580d9939b285f6ea7c3ad10e6226c14d03b5e2546a9c52d79fb3cd"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/COPYING3.LIB",
+      "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/COPYING",
+      "sha256": "231f7edcc7352d7734a96eef0b8030f77982678c516876fcb81e25b32d68564c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/COPYING.RUNTIME",
+      "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/include/COPYING",
+      "sha256": "231f7edcc7352d7734a96eef0b8030f77982678c516876fcb81e25b32d68564c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/include/COPYING3",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/COPYING.LIB",
+      "sha256": "32434afcc8666ba060e111d715bfdb6c2d5dd8a35fa4d3ab8ad67d8f850d2f2b"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/config/nvptx/gen-copyright.sh",
+      "sha256": "b24bd94ce82f22c05d190d99aecdf36fa23d70bbbcb84e996b921a310b2125f9"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/testsuite/gcc.dg/params/LICENSE",
+      "sha256": "4919cfb14a73cd64fcef67b107613970cf1659a09aa675dba31314f373bc7204"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/testsuite/gcc.dg/vect/tsvc/license.txt",
+      "sha256": "0bf700c6654f3e72308035d7ebb60abcc486e673ee8a72d19101f80812288f1c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/ada/doc/share/gnu_free_documentation_license.rst",
+      "sha256": "e1c24b9f8545fe967f839a98bda32478fa1939f45aab4ec31c3d0ad2d10ed47e"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/ada/doc/share/copyright.tex",
+      "sha256": "c0a2678e14049ef3d4ba0d9dd7abf8b0dbb8335d6e2311b2d2f568035321f2b7"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/m2/images/LICENSE.IMG",
+      "sha256": "30d9238a74b57dae99cc7949fcb57d1f3faeb374b619c598f83c216c42d384ee"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/m2/COPYING3.LIB",
+      "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/m2/COPYING.RUNTIME",
+      "sha256": "314527bfbe0acd79ab7845a0dca5cb961a04c443f0a573d45da9d8cb926a1b4e"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/m2/COPYING.FDL",
+      "sha256": "0b402b6bff3c3bb698bd8a7efe33827b4a07b3b9a5b8ace23ff62346d33eb534"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/m2/COPYING3",
+      "sha256": "0ae0485a5bd37a63e63603596417e4eb0e653334fa6c7f932ca3a0e85d4af227"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/go/gofrontend/LICENSE",
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/COPYING3.LIB",
+      "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/COPYING",
+      "sha256": "231f7edcc7352d7734a96eef0b8030f77982678c516876fcb81e25b32d68564c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/d/dmd/boostlicense.txt",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/gcc/COPYING3",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libiberty/COPYING.LIB",
+      "sha256": "32434afcc8666ba060e111d715bfdb6c2d5dd8a35fa4d3ab8ad67d8f850d2f2b"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libiberty/copying-lib.texi",
+      "sha256": "684f05578fc861d52339c8db6030000343578c35f024845df753ea43f07e5393"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/COPYING3",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libsanitizer/LICENSE.TXT",
+      "sha256": "74c2b24539a53c34abddb559266d89cb653b0198cd2faf9c04763d3223db7f6d"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libffi/LICENSE",
+      "sha256": "a61d06e8f7be57928e71e800eb9273b05cb8868c484108afe41e4305bb320dde"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gcc/gcc-14.2.0.tar.xz/gcc-14.2.0/libffi/LICENSE-BUILDTOOLS",
+      "sha256": "e67978cd18816c0cb7d29aaaacde7b7447402c2fb321a051698890a8eaedda94"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gmp/gmp-6.3.0.tar.xz/gmp-6.3.0/COPYING",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gmp/gmp-6.3.0.tar.xz/gmp-6.3.0/COPYING.LESSERv3",
+      "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gmp/gmp-6.3.0.tar.xz/gmp-6.3.0/AUTHORS",
+      "sha256": "da5870e2f0482c5dc15b4cfed8bbfb51ce1279c8f8fc52bdb8c13c7cee949c32"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gmp/gmp-6.3.0.tar.xz/gmp-6.3.0/COPYINGv3",
+      "sha256": "e6037104443f9a7829b2aa7c5370d0789a7bda3ca65a0b904cdc0c2e285d9195"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/gmp/gmp-6.3.0.tar.xz/gmp-6.3.0/COPYINGv2",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/iproute2/iproute2-6.15.0.tar.xz/iproute2-6.15.0/COPYING",
+      "sha256": "e6d6a009505e345fe949e1310334fcb0747f28dae2856759de102ab66b722cb4"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/iptables/iptables-1.8.11.tar.xz/iptables-1.8.11/COPYING",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/jansson/jansson-2.14.1.tar.gz/jansson-2.14.1/LICENSE",
+      "sha256": "150d90904cd8de73609bb177b42edd3867b07b4b7b786dbba319f30de39fcda2"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap/libcap-2.78.tar.xz/libcap-2.78/cap/License",
+      "sha256": "18eb30b662ed0abeef6ad6ded90a99b30332418d2f71e63dcb4646bbb23b9acc"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap/libcap-2.78.tar.xz/libcap-2.78/License",
+      "sha256": "68467e731f4744bd6e0bb69e8df9c3a994e09cd6b203d0c41327ac6d079c581d"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap/libcap-2.78.tar.xz/libcap-2.78/pam_cap/License",
+      "sha256": "018163f725c6a553035d5e475fe2449966a94413b57ce6c1dceec0c8d3ab2bc3"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap/libcap-2.78.tar.xz/libcap-2.78/psx/License",
+      "sha256": "279fa656c62857d42952b86a0789b98669ca1cb4b324a8d9e91397c174af4c14"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap-ng/libcap-ng-0.8.5.tar.gz/libcap-ng-0.8.5/AUTHORS",
+      "sha256": "0a647d34e95f5b1410711021c9bc997a86a42af9b98bb5678d78e0d3296e1e3c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap-ng/libcap-ng-0.8.5.tar.gz/libcap-ng-0.8.5/COPYING.LIB",
+      "sha256": "f18a0811fa0e220ccbc42f661545e77f0388631e209585ed582a1c693029c6aa"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libcap-ng/libcap-ng-0.8.5.tar.gz/libcap-ng-0.8.5/COPYING",
+      "sha256": "32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libeconf/libeconf-0.6.3.tar.gz/libeconf-0.6.3/LICENSE",
+      "sha256": "3a7fd605324017e976e0742ed641c308adce809486db6f219b038e73da5e1e52"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libmnl/libmnl-1.0.5.tar.bz2/libmnl-1.0.5/COPYING",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/libnftnl/libnftnl-1.2.9.tar.xz/libnftnl-1.2.9/COPYING",
+      "sha256": "98193898c663001eff2fdcfb676e210c13042bc1a05e8d570c363efa396f8e24"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/linux-pam/Linux-PAM-1.7.0.tar.xz/Linux-PAM-1.7.0/AUTHORS",
+      "sha256": "6762090b467396fa384de5210cbc0acae7d796feb326c40ec4d7979a5c1b6b99"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/linux-pam/Linux-PAM-1.7.0.tar.xz/Linux-PAM-1.7.0/COPYING",
+      "sha256": "133d98e7a2ab3ffd330b4debb0bfc10fea21e4b2b5a5b09de2e924293be5ff08"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/linux-pam/Linux-PAM-1.7.0.tar.xz/Linux-PAM-1.7.0/Copyright",
+      "sha256": "133d98e7a2ab3ffd330b4debb0bfc10fea21e4b2b5a5b09de2e924293be5ff08"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/linux-pam/Linux-PAM-1.7.0.tar.xz/Linux-PAM-1.7.0/libpamc/License",
+      "sha256": "127056435e3a1686ef7366f117da9fdca48fdfe4191a97777b44a5bcbabef34d"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/LICENSE",
+      "sha256": "4bc9c403f6b679cc076dee210e0e21c27b4e8f6d3fb43d85364c76657bfaaac5"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/contrib/debian/copyright",
+      "sha256": "4f6ef9d0e844bf432d6a0abb2623f5a61175ae40f7f0e3665490311d89e3af87"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/contrib/djgpp/LICENSE",
+      "sha256": "d011d1e02cb32b71c1ce2922ab41a2e2ad30f4ecf8de22c078d53618205abc05"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/examples/COPYING",
+      "sha256": "609b910ef05c9c855ecc1da155a36ed0f57514eac452cf93446530b5ea4b3bc3"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/lib/LICENSE",
+      "sha256": "8b58c446121a109ccf32edc094bba3010a3d85e4ee3702950db55e4d3e87736c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/programs/COPYING",
+      "sha256": "609b910ef05c9c855ecc1da155a36ed0f57514eac452cf93446530b5ea4b3bc3"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lz4/lz4-1.10.0.tar.gz/lz4-1.10.0/tests/COPYING",
+      "sha256": "609b910ef05c9c855ecc1da155a36ed0f57514eac452cf93446530b5ea4b3bc3"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lzo/lzo-2.10.tar.gz/lzo-2.10/AUTHORS",
+      "sha256": "a94f2d3916d2987ae0adc0a8dc641d94beb38e341d543bc956a6c8f0c3151c40"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/lzo/lzo-2.10.tar.gz/lzo-2.10/COPYING",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/musl/musl-1.2.5.tar.gz/musl-1.2.5/COPYRIGHT",
+      "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/Ada95/package/debian/copyright",
+      "sha256": "728e474ea21b8c2d0f655fb6ff1b9b9511d90c9466d7d8071fa7fcd11f49a873"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/package/debian-mingw64/copyright",
+      "sha256": "7bce2e969223caabb1583810a020ca889b06f3a6d229d8d5156103c0764da846"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/package/debian-mingw/copyright",
+      "sha256": "7bce2e969223caabb1583810a020ca889b06f3a6d229d8d5156103c0764da846"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/package/debian/copyright",
+      "sha256": "7bce2e969223caabb1583810a020ca889b06f3a6d229d8d5156103c0764da846"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/AUTHORS",
+      "sha256": "7b1c25f8c8d8455e3ed7802f4f384d6eed09a38d2e92285c41e2e1dc423de17d"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/test/package/debian-mingw64/copyright",
+      "sha256": "1c00b77a955e05e116a81bb512263d0ccf0279e234d38d7b176137b6ca3873d2"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/test/package/debian-mingw/copyright",
+      "sha256": "1c00b77a955e05e116a81bb512263d0ccf0279e234d38d7b176137b6ca3873d2"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/test/package/debian/copyright",
+      "sha256": "1c00b77a955e05e116a81bb512263d0ccf0279e234d38d7b176137b6ca3873d2"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/ncurses/ncurses-6.5-20250503.tgz/ncurses-6.5-20250503/COPYING",
+      "sha256": "708999f95527e1ffa670c6fce288c6c600cb477dd04afcc1171422b3dd4ee226"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/nftables/nftables-1.1.3.tar.xz/nftables-1.1.3/COPYING",
+      "sha256": "4ee1e51baf5f3166712fa0c3e01338c7257e50ddef245d28bb14ad68f6070ba5"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openssl/openssl-3.5.8.tar.gz/openssl-3.5.8/AUTHORS.md",
+      "sha256": "b9f638dfc06b59c2d3b808186c3b30f713805a5db390f5b77b1703ac58acb83e"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openssl/openssl-3.5.8.tar.gz/openssl-3.5.8/LICENSE.txt",
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openssl/openssl-3.5.8.tar.gz/openssl-3.5.8/crypto/x509/v3_usernotice.c",
+      "sha256": "db1eb4c4563d44b9b5b92c2467b3ed8211ce13a6511b3e330fd7af81cfba17f7"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openssl/openssl-3.5.8.tar.gz/openssl-3.5.8/external/perl/Text-Template-1.56/LICENSE",
+      "sha256": "9837f05336ef3cbacb6a96e1672a0426d81ad01191f214b8d48e22ca62338181"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openssl/openssl-3.5.8.tar.gz/openssl-3.5.8/test/certs/ext-userNotice.pem",
+      "sha256": "affa69745b5e0ee3b4f289bd9da12d56c5a4a68c339a6e2932a3c9ba4743605c"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openssl/openssl-3.5.8.tar.gz/openssl-3.5.8/util/perl/OpenSSL/copyright.pm",
+      "sha256": "04213b69dbebc8ba0dd8a6216af1d9422f9b63619c1cf2f1d8aa107b83bbb608"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openvpn/openvpn-2.6.20.tar.gz/openvpn-2.6.20/AUTHORS",
+      "sha256": "24438a3747863ddc4b6d997c1845378193991b83ef6b343feeedee1e4d899b86"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openvpn/openvpn-2.6.20.tar.gz/openvpn-2.6.20/COPYING",
+      "sha256": "89ead6308d142175025e06a8bd1621d406b26e2a72cc4106c10a74102eeb3560"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/openvpn/openvpn-2.6.20.tar.gz/openvpn-2.6.20/COPYRIGHT.GPL",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/pax-utils/pax-utils-1.3.8.tar.xz/pax-utils-1.3.8/COPYING",
+      "sha256": "e6d6a009505e345fe949e1310334fcb0747f28dae2856759de102ab66b722cb4"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/readline/readline-8.2.tar.gz/readline-8.2/COPYING",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/skalibs/skalibs-2.14.4.0.tar.gz/skalibs-2.14.4.0/AUTHORS",
+      "sha256": "ca5281c534127ac5e042b606a2630b81a41092b3bf9073802a1e23c8501ae9b5"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/skalibs/skalibs-2.14.4.0.tar.gz/skalibs-2.14.4.0/COPYING",
+      "sha256": "cadf2c7d05a2c425250211c01db2ff33fa2bc31e293c8c040227b046ce1cb77f"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/skalibs/skalibs-2.14.4.0.tar.gz/skalibs-2.14.4.0/doc/license.html",
+      "sha256": "f118cc0c1296662806a714fa3d92a3a7174ca8f62363b4c3828a1240b8edcc38"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/tini/tini-0.19.0.tar.gz/tini-0.19.0/LICENSE",
+      "sha256": "e5f46bca81266bdd511cf08018d66866870531794569c04f9b45f50dd23c28b0"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/tini/tini-0.19.0.tar.gz/tini-0.19.0/src/tiniLicense.h",
+      "sha256": "163d55ecfefeed19f765bdf7b45b32ac5e0d8dd92e0a13ff85c39f9a78701d4d"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.BSD-2-Clause",
+      "sha256": "527f738966ca396cd5a68c1509390de2a780c6b614d9ee57f7544a6161938ed1"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.BSD-3-Clause",
+      "sha256": "9b718a9460fed5952466421235bc79eb49d4e9eacc920d7a9dd6285ab8fd6c6d"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.BSD-4-Clause-UC",
+      "sha256": "ba7640f00d93e72e92b94b9d71f25ec53bac2f1682f5c4adcccb0018359f60f8"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.EUPL-1.2",
+      "sha256": "6fc9e709ccbfe0d77fbffa2427a983282be2eb88e47b1cdb49f21a83b4d1e665"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.GPL-2.0-only",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.GPL-2.0-or-later",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.GPL-3.0-or-later",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.ISC",
+      "sha256": "e53348ce276358e9997014071c5294b36a18c4b34f32f00ee57b9acce0aafd63"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.LGPL-2.1-or-later",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/Documentation/licenses/COPYING.MIT",
+      "sha256": "8555341619542abb48c102afd954e42d4478e5be16ad3d5af7b0ff71009e7348"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/libblkid/COPYING",
+      "sha256": "f03b01c1251bc3bfee959aea99ed7906a0b08a2ff132d55a1ece18ee573a52a1"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/libfdisk/COPYING",
+      "sha256": "f03b01c1251bc3bfee959aea99ed7906a0b08a2ff132d55a1ece18ee573a52a1"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/liblastlog2/COPYING",
+      "sha256": "d0a359f02d74adc85263c88a1f2e9911e96619fef67067e832ef7936b0606863"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/libmount/COPYING",
+      "sha256": "5f12c2408a84be40fbff8ad7e281aa4e884fb92ee3f9a61aedf886a9503d3500"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/libsmartcols/COPYING",
+      "sha256": "f03b01c1251bc3bfee959aea99ed7906a0b08a2ff132d55a1ece18ee573a52a1"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/libuuid/COPYING",
+      "sha256": "5068749ee9c2f2c545af4a4de9fde3c39dc8d90af47cc0b3a42700116f9b7e71"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/pam_lastlog2/COPYING",
+      "sha256": "d0a359f02d74adc85263c88a1f2e9911e96619fef67067e832ef7936b0606863"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/AUTHORS",
+      "sha256": "765161ea0375b1d57bf2fe3cdd237a9c102ce6d3bb9d53ad8394f5d8b7562b3a"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/util-linux/util-linux-2.41.6.tar.xz/util-linux-2.41.6/COPYING",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/utmps/utmps-0.1.3.1.tar.gz/utmps-0.1.3.1/AUTHORS",
+      "sha256": "e9aa044a07a5c91b380ef3656062759705c435c085c5a43940d1c0785d3bc865"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/utmps/utmps-0.1.3.1.tar.gz/utmps-0.1.3.1/COPYING",
+      "sha256": "0f415da77eb45ab52dad82f23c1f46e827bacb0b68d6f42c919ae8f3d254fb97"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zlib/zlib-1.3.2.tar.gz/zlib-1.3.2/LICENSE",
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zlib/zlib-1.3.2.tar.gz/zlib-1.3.2/contrib/dotzlib/LICENSE_1_0.txt",
+      "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zlib/zlib-1.3.2.tar.gz/zlib-1.3.2/contrib/minizip/LICENSE.Info-Zip",
+      "sha256": "fc686023047ce5ce3a18a9b8a777156f0e475929d3de06bac279f3c025d2b2ca"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zstd/zstd-1.5.7.tar.gz/zstd-1.5.7/COPYING",
+      "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zstd/zstd-1.5.7.tar.gz/zstd-1.5.7/LICENSE",
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zstd/zstd-1.5.7.tar.gz/zstd-1.5.7/build/LICENSE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/third-party/runtime/alpine/zstd/zstd-1.5.7.tar.gz/zstd-1.5.7/tests/test-license.py",
+      "sha256": "a0bd1837d89c90e45722ff2c109530f2d280fa8296732b1a86adea2054f08ee9"
+    }
+  ]
+}

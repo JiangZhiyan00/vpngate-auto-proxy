@@ -1,0 +1,48 @@
+# 构建产物与本机工具缓存
+/target/
+/debug/
+/release/
+/dist/
+/build/
+/coverage/
+node_modules/
+*.rs.bk
+*.rlib
+*.prof*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 本机运行配置、凭据及验收输出；示例配置继续提交
+*.local.json
+*.local.yaml
+*.local.yml
+.env*
+!.env.example
+/validation-output/
+/data/
+/runtime/
+/secrets/
+/private-key
+/id_rsa
+/id_ed25519
+
+# 根目录交付归档，发布时上传附件而非提交仓库
+/*.tar
+/*.tar.gz
+/*.tgz
+/*.zip
+
+# 日志、编辑器与系统临时文件
+*.log
+*.log.*
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

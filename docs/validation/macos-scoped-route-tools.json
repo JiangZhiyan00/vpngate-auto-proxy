@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "scoped-route-tools",
+  "new_unit_passed": 11,
+  "default_unit_passed": 142,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "unsafe_code_added": false,
+  "dependencies_added": false,
+  "live_read_only_route_channel_validated": true,
+  "route_write_backend_injected": true,
+  "configured_worker_scoped_route_integrated": true,
+  "public_service_integrated": false,
+  "native_route_write_validated": false,
+  "native_public_exit_identity_validated": false,
+  "native_privilege_drop_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "initial_test_failures": [
+    "路由事务尚未实现时两项定向回归失败",
+    "首次完整回归中既有非阻塞关闭状态断言收到暂不可读；改为有界可读等待后完整回归通过"
+  ],
+  "test_logs": {
+    "initial-all-tests.log": "cc57892d4b67a931772067e189fdd62a226b02a55c97a7eaf7d962f7007a8077",
+    "final-all-tests.log": "87df7149a7e6818dfce2e105fcebea5f3c41f698963df4a3152e091dc0093ed6",
+    "platform-tests.log": "0bb0e6fd5a6a67495c598a0c8d94c59bfbd695c8c6d239e7a90b749718bdd347"
+  }
+}

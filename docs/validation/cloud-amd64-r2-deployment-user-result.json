@@ -1,0 +1,39 @@
+{
+  "reported_at": "2026-10-14T15:57:41+08:00",
+  "source": "用户在 Debian 12 x86_64 云服务器执行第二版离线包后返回的终端输出与部署预检报告",
+  "bundle": "vpngate-cloud-amd64-20261014-r2.tar.gz",
+  "observed": {
+    "images_loaded": [
+      "vpngate-auto-proxy:cloud-amd64-20261014",
+      "vpngate-auto-proxy-fixture:cloud-amd64-20261014"
+    ],
+    "credentials_initialized": true,
+    "deployment_check": "passed",
+    "image_id": "sha256:4777dd6426f83e619fe9e505bec4a2d3b5966339a5856309046f4ae1b947c305",
+    "verified_ids": [
+      "sha256:28114d2dbe11ca0ee2f3c174eb43a0d1bcbc5c01321f595fcbdca619a24d0d9b",
+      "sha256:4777dd6426f83e619fe9e505bec4a2d3b5966339a5856309046f4ae1b947c305"
+    ],
+    "apparmor_profile_applied": true,
+    "security_options": [
+      "name=apparmor,profile=default",
+      "name=seccomp,profile=builtin",
+      "name=cgroupns"
+    ],
+    "config_sha256": "9a743ce926b6362455f9d56f860f80b459299a7afbe7fe81165a7226c4ef5e02",
+    "compose_start": "passed",
+    "initial_state": "waiting",
+    "initial_ready": false,
+    "initial_source_fetched_at": null,
+    "initial_candidates_total": 0,
+    "followup_source_fetched_at": "2026-10-14T07:59:16.405187113Z",
+    "followup_source_expired": false,
+    "followup_source_last_error": null,
+    "followup_candidates_total": 0,
+    "followup_round_selected": 0,
+    "followup_ready": false,
+    "public_exit_validated": false
+  },
+  "diagnosis": "后续查询证实来源获取成功且未过期，但候选仍为零。本机同日公开来源样本的 96 条配置全部使用 AES-128-CBC 与 SHA1，第二版严格算法白名单全部拒绝；云端未回传原始来源正文，因此该对照为根因推断，不宣称与本机样本逐字节相同。",
+  "scope": "证明第二版离线包镜像加载、凭据初始化、部署预检、专用策略应用、容器启动、来源获取及控制状态查询；不证明候选验证、公共出口或真实设备试用。"
+}

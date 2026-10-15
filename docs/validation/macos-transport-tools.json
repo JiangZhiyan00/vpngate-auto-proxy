@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-12",
+  "case": "transport-tools",
+  "status": "passed",
+  "native_udp_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "tests": {
+    "承载与端点提前拒绝": 6,
+    "句柄故障与归属": 16,
+    "异常退出": 10,
+    "复用": 10,
+    "代际": 7
+  },
+  "total_tests": 49,
+  "fixtures": {
+    "udp-fixture": {
+      "case": "custody-fixture",
+      "status": "passed",
+      "native_tunnel_validated": false,
+      "parallel_tunnels_validated": false,
+      "full_macos_backend_validated": false,
+      "transport": "udp",
+      "fixture_count": 3,
+      "fixture_validated": true,
+      "fixture_cleanup_errors": []
+    },
+    "tcp-fixture": {
+      "case": "parallel-fixture",
+      "status": "passed",
+      "native_tunnel_validated": false,
+      "parallel_tunnels_validated": false,
+      "full_macos_backend_validated": false,
+      "transport": "tcp",
+      "fixture_count": 3,
+      "fixture_validated": true,
+      "fixture_cleanup_errors": []
+    },
+    "udp-single-fixture": {
+      "case": "fixture",
+      "status": "passed",
+      "native_tunnel_validated": false,
+      "full_macos_backend_validated": false,
+      "transport": "udp",
+      "fixture_validated": true,
+      "fixture_cleanup_errors": []
+    }
+  },
+  "native_preflight": {
+    "status": "blocked",
+    "transport": "udp",
+    "administrator": false,
+    "host_network_mutations": false
+  },
+  "scope": "工具、受控容器内真实握手和业务/解析通过；不代表本机原生数据报承载或完整隔离通过。"
+}

@@ -1,0 +1,37 @@
+# 仅发送产品构建、发布声明覆盖层所需文件。
+# 指定的 Dockerfile 与本文件仍由构建器自动读取。
+**
+!Cargo.toml
+!Cargo.lock
+!src/
+!src/**
+!LICENSE
+!THIRD_PARTY_NOTICES.md
+!deploy/
+deploy/**
+!deploy/entrypoint.sh
+!docs/
+docs/**
+!docs/third-party/
+docs/third-party/**
+!docs/third-party/rust/
+!docs/third-party/rust/**
+!docs/third-party/nested/
+!docs/third-party/nested/**
+!docs/third-party/runtime/
+!docs/third-party/runtime/**
+
+# 即使误放在源码目录，仍排除本机配置和临时文件。
+**/*.local.json
+**/*.local.yaml
+**/*.local.yml
+**/.env*
+**/__pycache__/
+**/*.py[cod]
+**/*.log
+**/*.log.*
+**/*.tmp
+**/*.swp
+**/*.swo
+**/*~
+**/.DS_Store

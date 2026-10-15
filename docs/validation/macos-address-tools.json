@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "interface-address-configuration-tools",
+  "new_unit_passed": 11,
+  "default_unit_passed": 112,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "address_configuration_component_implemented": true,
+  "system_header_abi_check_passed": true,
+  "native_read_only_interface_query_passed": true,
+  "native_address_write_validated": false,
+  "production_notification_option_enabled": false,
+  "production_parent_interface_entry_integrated": false,
+  "native_topology_notification_validated": false,
+  "native_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "sudo_noninteractive_available": false,
+  "initial_test_failures": [
+    "有效配置回归在配置驱动未实现时失败，完成后通过"
+  ],
+  "scope": "受控后端配置与撤销、冲突拒绝、系统头文件布局及真实只读查询、公开入口权限拒绝和资源保留；未执行真实网卡写入或正式启动接入"
+}

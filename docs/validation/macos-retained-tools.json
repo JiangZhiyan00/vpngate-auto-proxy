@@ -1,0 +1,24 @@
+{
+  "case": "retained-fixture",
+  "status": "passed",
+  "native_tunnel_validated": false,
+  "parallel_tunnels_validated": false,
+  "full_macos_backend_validated": false,
+  "fixture_count": 3,
+  "fixture_validated": true,
+  "fixture_cleanup_errors": [],
+  "record_date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "source_sha256": "60aed729633c0f42911978895148295fe0679cabcca7cd4c0bf5f9440da6536b",
+  "retained_echo_blocking_validated": false,
+  "validation": {
+    "retained_socket_tests_passed": 3,
+    "existing_macos_tool_tests_passed": 26,
+    "format": "passed",
+    "strict_static_analysis": "passed",
+    "python_syntax": "passed",
+    "native_stage": "blocked_by_administrator_preflight",
+    "long_running_tests": "deferred"
+  },
+  "scope": "工具及三个真实隧道远端夹具；不代表苹果原生旧套接字阻断通过，也不证明零直连"
+}

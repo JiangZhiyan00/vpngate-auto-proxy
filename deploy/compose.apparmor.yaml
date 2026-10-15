@@ -1,0 +1,4 @@
+services:
+  proxy:
+    security_opt:
+      - apparmor=vpngate-auto-proxy

@@ -1,0 +1,19 @@
+{
+  "reported_at": "2026-10-15",
+  "source": "用户在个人苹果电脑经 SSH 本地端口转发执行 curl 后返回的终端结果",
+  "bundle": "vpngate-cloud-amd64-20261014-r3.tar.gz",
+  "test": {
+    "client_platform": "用户个人苹果电脑，具体系统版本未在本次测试复核",
+    "connection": "SSH 本地转发：127.0.0.1:11080 至云服务器 127.0.0.1:1080",
+    "proxy_protocol": "SOCKS5 CONNECT",
+    "authentication": "用户名密码认证，密码在客户端交互输入",
+    "remote_dns": true,
+    "target": "https://www.gstatic.com/generate_204",
+    "reported_output": "HTTP 204\ncurl 退出码 0",
+    "http_status": 204,
+    "curl_exit_code": 0,
+    "result": "passed"
+  },
+  "scope": "证明个人设备经 SSH 转发连接第三版云端容器，完成带认证的 SOCKS5 HTTPS 请求及代理端域名解析。证据为用户返回的终端结果；不证明宿主公网直接发布代理端口、持续稳定性、Linux 原生部署或苹果原生服务后端。",
+  "secrets_recorded": false
+}

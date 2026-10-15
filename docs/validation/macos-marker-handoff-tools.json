@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-10-13T13:26:55.458852+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "passed-for-unprivileged-regressions",
+  "unit_passed": 257,
+  "contract_passed": 68,
+  "ignored": 36,
+  "new_runtime_regressions": 3,
+  "fmt_passed": true,
+  "clippy_passed": true,
+  "build_passed": true,
+  "administrator_cross_account_delivery_validated": false,
+  "actual_controller_child_integrated": false,
+  "full_macos_backend_validated": false,
+  "source_sha256": "f19fdd9e741c46551937077ecee4ed63048df2c49cf4203076c167eb01f75dd1",
+  "cargo_lock_sha256": "db68c4e7043e05a6a6cf8897710f209274af92ea47c79d3ff7f85da59601b9f6",
+  "program_sha256": "b3ed02381902f54f0d9f067d39be0f2d0331b33aa3786585272ab311af948101",
+  "log_directory": "/Users/jiangzhiyan/VsCodeProjects/vpngate-auto-proxy/validation-output/macos-marker-handoff-20261013",
+  "log_sha256": {
+    "clippy.log": "b56d6bf845f3a4cb725ccec8b83a3d230546380d2c11230ff89a764c623b69ba",
+    "tests.log": "3043e82e96f1b838f25f29db74ca292fafdcebbc35e2e07f28267d9b4288729f",
+    "build.log": "b9aa9377584cff1c21215354d37e054fd7f9554a214fcb5479eaf4456695d24c"
+  }
+}

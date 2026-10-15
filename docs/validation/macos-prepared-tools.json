@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Shanghai",
+  "case": "prepared-generation-tools",
+  "new_unit_passed": 9,
+  "default_unit_passed": 131,
+  "default_contract_passed": 63,
+  "default_ignored": 35,
+  "format_passed": true,
+  "strict_static_check_passed": true,
+  "locked_build_passed": true,
+  "configured_worker_driver_integrated": true,
+  "cancellable_worker_start_integrated": true,
+  "real_ordinary_child_cleanup_validated": true,
+  "configuration_layer_injected": true,
+  "public_service_integrated": false,
+  "native_privilege_drop_validated": false,
+  "native_address_write_validated": false,
+  "native_tunnel_validated": false,
+  "full_macos_backend_validated": false,
+  "thirty_minute_validation_executed": false,
+  "initial_test_failures": [
+    "阶段驱动未实现时定向回归失败，完成后通过"
+  ],
+  "scope": "配置监督与业务启动组合、同令牌撤销、启动取消、双侧回收；普通权限进程与注入配置层，不代表完整原生后端"
+}

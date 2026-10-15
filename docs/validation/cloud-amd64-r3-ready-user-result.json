@@ -1,0 +1,45 @@
+{
+  "reported_at": "2026-10-14",
+  "source": "用户在 Debian 12 x86_64 云服务器第三版目录执行 bash manage.sh status 与 bash manage.sh ready 后返回的两份终端 JSON",
+  "bundle": "vpngate-cloud-amd64-20261014-r3.tar.gz",
+  "instance_id": "c0157986-54bd-46d2-a943-0d8153404ace",
+  "observed": {
+    "state": "ready",
+    "ready": true,
+    "listen_address": "0.0.0.0:1080",
+    "active_endpoint": {
+      "ip": "112.172.121.216",
+      "port": 995,
+      "transport": "tcp"
+    },
+    "source_fetched_at": "2026-10-14T09:28:20.499611206Z",
+    "source_expired": false,
+    "source_last_error": null,
+    "candidates_total": 96,
+    "candidates_available": 7,
+    "candidates_not_tested": 87,
+    "round_selected": 20,
+    "round_completed": 7,
+    "running": 2,
+    "last_exit_checks": [
+      {
+        "finished_at": "2026-10-14T09:28:36.649564449Z",
+        "success": true,
+        "attempts": 1,
+        "elapsed_ms": 1481,
+        "http_status": 204
+      },
+      {
+        "finished_at": "2026-10-14T09:28:46.761619315Z",
+        "success": true,
+        "attempts": 1,
+        "elapsed_ms": 1494,
+        "http_status": 204
+      }
+    ],
+    "connections_current": 0,
+    "connections_limit": 50,
+    "last_error": null
+  },
+  "scope": "证明第三版云端容器从公开来源取得候选、活动节点建立并通过程序内部真实出口检测；用户未回传客户端 SOCKS5 认证及业务请求结果、ready 命令退出码或第三版完整部署预检报告，不据此确认真实设备试用或全部部署矩阵。"
+}
