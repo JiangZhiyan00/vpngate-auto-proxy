@@ -7,12 +7,14 @@ import socketserver
 import subprocess
 import threading
 import unittest
+import sys
 
 from macos_retained import read_record
 from macos_lease import BorrowedWorker
 PROBE = Path(__file__).resolve().parents[1] / "target/debug/examples/macos_tunnel_probe"
 
 
+@unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
 class RetainedTests(unittest.TestCase):
     def execute(self, close_connection, unexpected=False, custody=False):
         sockets, connections = [], []

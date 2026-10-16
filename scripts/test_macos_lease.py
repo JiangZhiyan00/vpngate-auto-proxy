@@ -48,6 +48,12 @@ class DescriptorTests(unittest.TestCase):
 
 
 class ControlTests(unittest.TestCase):
+    def test_non_apple_platform_is_rejected_before_opening_control(self):
+        with patch('macos_lease.sys.platform', 'linux'), patch('macos_lease.open_control') as opened:
+            with self.assertRaisesRegex(RuntimeError, '仅支持苹果系统'):
+                UtunHandle()
+        opened.assert_not_called()
+
     def test_explicit_unit_avoids_unsupported_address_query(self):
         handle = Mock()
         handle.getsockopt.return_value = b'utun42\0'
@@ -74,7 +80,7 @@ class ControlTests(unittest.TestCase):
     def test_busy_connect_tries_next_explicit_unit(self):
         error = OSError(errno.EBUSY, '占用')
         error.stage = 'connect_control'
-        with patch('macos_lease.open_control', side_effect=[error,(Mock(),'utun42',142)]) as opened:
+        with patch('macos_lease.sys.platform', 'darwin'), patch('macos_lease.open_control', side_effect=[error,(Mock(),'utun42',142)]) as opened:
             handle = UtunHandle()
         self.assertEqual(handle.unit, 2)
         self.assertEqual([c.args[0] for c in opened.call_args_list], [1,2])
@@ -82,7 +88,7 @@ class ControlTests(unittest.TestCase):
     def test_busy_lookup_is_not_treated_as_unit_collision(self):
         error = OSError(errno.EBUSY, '查询失败')
         error.stage = 'lookup_control'
-        with patch('macos_lease.open_control', side_effect=error) as opened:
+        with patch('macos_lease.sys.platform', 'darwin'), patch('macos_lease.open_control', side_effect=error) as opened:
             with self.assertRaises(OSError):
                 UtunHandle()
         opened.assert_called_once_with(1)

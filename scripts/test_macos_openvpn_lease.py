@@ -3,12 +3,14 @@ from pathlib import Path
 import socket
 import subprocess
 import unittest
+import sys
 
 from macos_pinned import validate_dependency
 
 BINARY=Path(__file__).resolve().parents[1]/'validation-output/macos-deps/openvpn-2.6.23-lease-local/sbin/openvpn'
 
 
+@unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的固定实验依赖")
 class DependencyTests(unittest.TestCase):
     def run_binary(self, descriptor, pass_fds=()):
         return subprocess.run([str(BINARY),'--dev','tun','--dev-node','utun-fd:'+descriptor,

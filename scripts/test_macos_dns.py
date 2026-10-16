@@ -6,6 +6,7 @@ import socket
 import subprocess
 import threading
 import unittest
+import sys
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,6 +61,7 @@ class DNSProbeTests(unittest.TestCase):
         finally:
             fixture.response = original
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_udp_and_truncated_tcp_resolution(self):
         result = self.execute("node-a")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -67,25 +69,30 @@ class DNSProbeTests(unittest.TestCase):
         self.assertTrue(value["dns_udp"] and value["dns_tcp_fallback"])
         self.assertEqual(value["resolved_ipv4"], "10.231.66.1")
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_wrong_remote_identity_rejected(self):
         result = self.execute("node-b")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_wrong_transaction_rejected(self):
         result = self.execute("node-a", mutate=lambda reply: bytes([reply[0] ^ 1]) + reply[1:])
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_wrong_question_rejected(self):
         result = self.execute("node-a", mutate=lambda reply: reply[:13] + b"x" + reply[14:])
         self.assertNotEqual(result.returncode, 0)
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_invalid_interface_has_no_default_fallback(self):
         result = self.execute("node-a", interface=4294967295)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_tcp_fallback_response_is_validated(self):
         def mutate(reply):
             if reply[2] == 0x81 and reply[12:22] == b"\x09truncated":
@@ -95,6 +102,7 @@ class DNSProbeTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_truncated_response_question_is_validated_before_tcp(self):
         def mutate(reply):
             return reply[:13] + b"x" + reply[14:] if reply[2] == 0x83 else reply
@@ -102,6 +110,7 @@ class DNSProbeTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
     def test_tcp_response_length_is_bounded(self):
         result = self.execute("node-a", mutate=lambda reply: reply + b"x" * 513 if reply[2] == 0x81 and reply[12:22] == b"\x09truncated" else reply)
         self.assertNotEqual(result.returncode, 0)

@@ -6,10 +6,12 @@ import socketserver
 import subprocess
 import threading
 import unittest
+import sys
 
 PROBE = Path(__file__).resolve().parents[1] / "target/debug/examples/macos_tunnel_probe"
 
 
+@unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
 class ProbeTests(unittest.TestCase):
     def execute(self, identity, rounds, udp_identity="node-a"):
         connections = []
