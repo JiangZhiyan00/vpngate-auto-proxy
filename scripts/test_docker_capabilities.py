@@ -1,7 +1,7 @@
 """不能把业务成功等同于降权及边界能力已正确清空。"""
 import unittest
 
-from validate_docker import validate_child_capabilities
+from validate_docker import validate_child_capabilities, validate_denied_capabilities, format_failure
 
 
 def process(uid, mask):
@@ -13,6 +13,23 @@ def process(uid, mask):
 
 
 class ChildCapabilitiesTests(unittest.TestCase):
+    def test_denied_instance_requires_exit_code_and_capability_diagnostic(self):
+        validate_denied_capabilities("1", "缺少必要能力：CHOWN")
+        for code, diagnostic in [("0", "缺少能力"), ("2", "参数错误"), ("1", "配置不可读")]:
+            with self.subTest(code=code), self.assertRaises(RuntimeError):
+                validate_denied_capabilities(code, diagnostic)
+
+    def test_empty_assertion_keeps_failure_location_without_local_values(self):
+        secret = "不得出现在诊断中的局部值"
+        try:
+            assert False
+        except AssertionError as error:
+            message = format_failure(error)
+        self.assertIn("test_docker_capabilities.py:", message)
+        self.assertIn("AssertionError", message)
+        self.assertNotIn(secret, message)
+
+
     def test_exact_control_and_tunnel_capabilities(self):
         validate_child_capabilities(process(10001, 0) + '\n' + process(10002, 1 << 12))
 
