@@ -66,5 +66,8 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: 推送已经验收的同一镜像
-        run: docker push "$DOCKERHUB_IMAGE:$RELEASE_TAG"
+      - name: 推送版本标签及最新标签
+        run: |
+          docker push "$DOCKERHUB_IMAGE:$RELEASE_TAG"
+          docker tag "$DOCKERHUB_IMAGE:$RELEASE_TAG" "$DOCKERHUB_IMAGE:latest"
+          docker push "$DOCKERHUB_IMAGE:latest"
