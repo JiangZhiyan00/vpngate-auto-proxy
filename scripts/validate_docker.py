@@ -11,6 +11,7 @@ import secrets
 import subprocess
 import sys
 import tempfile
+import traceback
 import time
 import uuid
 
@@ -62,6 +63,19 @@ def run(*args, check=True, timeout=60):
     if check and result.returncode:
         raise RuntimeError(f"受控命令失败，退出码 {result.returncode}：{result.stderr[-2000:]}")
     return result
+
+def validate_denied_capabilities(exit_code, diagnostic):
+    if exit_code != "1":
+        raise RuntimeError(f"缺少能力的实例退出码应为 1，实际为 {exit_code}：{diagnostic[-2000:]}")
+    if "能力" not in diagnostic:
+        raise RuntimeError("缺少能力的实例未输出能力诊断：" + diagnostic[-2000:])
+
+
+def format_failure(error):
+    frames = traceback.extract_tb(error.__traceback__)
+    location = f"{Path(frames[-1].filename).name}:{frames[-1].lineno}" if frames else "未知位置"
+    return f"容器验收失败（{location}，{type(error).__name__}）：{error or '检查未通过'}"
+
 
 def fixture_startup_failure(name, output, redactions=()):
     """在归属资源回收前保留有限状态及夹具日志，不保存配置或环境变量。"""
@@ -311,15 +325,18 @@ def main():
             if value:
                 break
             time.sleep(0.2)
-        assert value and not value["ready"]
+        if not value or value["ready"]:
+            diagnostic = run("docker", "logs", loop, check=False)
+            raise RuntimeError("回环实例未进入等待状态：" + (diagnostic.stdout + diagnostic.stderr)[-2000:].replace(password, "[已隐藏]"))
         port = run("docker", "port", loop, "1080/tcp").stdout.strip().rsplit(":", 1)[1]
-        assert run("curl", "--max-time", "3", "--socks5-hostname", f"127.0.0.1:{port}", "http://fixture.example/", check=False).returncode != 0
+        if run("curl", "--max-time", "3", "--socks5-hostname", f"127.0.0.1:{port}", "http://fixture.example/", check=False).returncode == 0:
+            raise RuntimeError("回环监听实例意外接受了宿主代理请求")
         stop(loop)
         denied = product + "-denied"
         launch(denied, "11.52.0.5", "loop.json", capabilities=False)
-        assert run("docker", "wait", denied, timeout=10).stdout.strip() == "1"
+        exit_code = run("docker", "wait", denied, timeout=10).stdout.strip()
         diagnostic = run("docker", "logs", denied, check=False)
-        assert "能力" in diagnostic.stdout + diagnostic.stderr
+        validate_denied_capabilities(exit_code, (diagnostic.stdout + diagnostic.stderr).replace(password, "[已隐藏]"))
         print("受控镜像短时验收通过：认证、状态、停止、缓存重启、故障阻断与恢复、回环及权限诊断", flush=True)
         if not apparmor:
             print("当前引擎未启用强制实施安全模块；专用策略只做解析校验，原生强制实施及目标架构仍待验收", flush=True)
@@ -362,5 +379,5 @@ if __name__ == "__main__":
     try:
         main()
     except (RuntimeError, AssertionError, subprocess.TimeoutExpired) as error:
-        print(f"容器验收失败：{error}", flush=True)
+        print(format_failure(error), flush=True)
         raise SystemExit(1)

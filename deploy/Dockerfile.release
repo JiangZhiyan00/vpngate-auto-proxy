@@ -1,4 +1,4 @@
-ARG RUNTIME_IMAGE
+ARG RUNTIME_IMAGE=vap-release-base:local
 FROM ${RUNTIME_IMAGE}
 ARG RELEASE_VERSION
 COPY LICENSE THIRD_PARTY_NOTICES.md /usr/share/licenses/vpngate-auto-proxy/
