@@ -1,5 +1,6 @@
 """为版本标签构建并验收镜像，冻结与该镜像一致的完整源码材料。"""
 import argparse
+from image_program import program_bytes
 import hashlib
 import json
 import os
@@ -76,8 +77,7 @@ def main():
         command.append('--require-apparmor')
     run(*command)
     identity = json.loads(subprocess.check_output(['docker', 'image', 'inspect', image], text=True))[0]
-    binary = subprocess.check_output(['docker', 'run', '--rm', '--network', 'none', '--cap-drop', 'ALL',
-                                     '--read-only', '--entrypoint', 'cat', image, '/usr/local/bin/vpngate-auto-proxy'])
+    binary = program_bytes(image)
     report = output / 'validation.json'
     report.write_text(json.dumps({'status': 'passed', 'image_id': identity['Id'],
                                  'binary_sha256': hashlib.sha256(binary).hexdigest(),

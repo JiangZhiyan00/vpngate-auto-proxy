@@ -238,7 +238,7 @@ def manage(root, action):
     security = security_options(root)
     base = compose_command(root, any('name=apparmor' in value for value in security))
     if action in ('status', 'ready'):
-        arguments = ['exec', '-T', 'proxy', 'vpngate-auto-proxy', 'status', '--runtime-dir', '/run/vap', '--json']
+        arguments = ['exec', '-T', 'proxy', 'vap', 'status', '--runtime-dir', '/run/vap', '--json']
         if action == 'ready':
             arguments += ['--check-ready']
     elif action == 'stop':

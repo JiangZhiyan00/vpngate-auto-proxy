@@ -4,7 +4,7 @@
   "scope": {
     "platform": "linux/amd64",
     "deployment": "Docker",
-    "image_id": "sha256:47ce0205fdea1584b341da670bd6701447f0a491231fa430b9caf7996cd3d00f",
+    "image_id": "sha256:51c4bed6e8c6ff3ee50818fbed4615768dbed8505d4a370d4df0c2294c64b548",
     "source_materials": "随完整发布包提供",
     "excluded": [
       "苹果原生二进制",
@@ -13,8 +13,8 @@
       "能力实验镜像"
     ]
   },
-  "recorded_at": "2026-10-15T10:05:40.579641+08:00",
-  "inventory_sha256": "d362a4a808ffae788ede004cef6ac6da47951ba75145bbf9cd9031d5d4ab3d43",
+  "recorded_at": "2026-10-16T09:50:46.118488+08:00",
+  "inventory_sha256": "1c17f3b0b1a6d277f210688aa6f42960aef0d03ebab9967ad21a9a21a7028f26",
   "verified_source_files": 769,
   "project_license": "MIT",
   "system_packages": 72,

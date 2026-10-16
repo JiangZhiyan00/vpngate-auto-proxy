@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-15T10:05:38.599315+08:00",
+  "generated_at": "2026-10-16T09:50:44.146885+08:00",
   "cargo_lock_sha256": "aa4518aa7a4311df980288777195fde01dacc21b614be455e02be96523f304c7",
   "targets": [
     "aarch64-unknown-linux-musl",
@@ -3833,7 +3833,7 @@
     }
   ],
   "runtime_image": {
-    "id": "sha256:47ce0205fdea1584b341da670bd6701447f0a491231fa430b9caf7996cd3d00f",
+    "id": "sha256:51c4bed6e8c6ff3ee50818fbed4615768dbed8505d4a370d4df0c2294c64b548",
     "architecture": "amd64",
     "packages": [
       {
@@ -4491,7 +4491,7 @@
   "distribution_review_scope": {
     "platform": "linux/amd64",
     "deployment": "Docker",
-    "image_id": "sha256:47ce0205fdea1584b341da670bd6701447f0a491231fa430b9caf7996cd3d00f",
+    "image_id": "sha256:51c4bed6e8c6ff3ee50818fbed4615768dbed8505d4a370d4df0c2294c64b548",
     "source_materials": "随完整发布包提供",
     "excluded": [
       "苹果原生二进制",

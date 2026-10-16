@@ -85,7 +85,7 @@ fn malformed_environment_fails_before_any_network_start() {
 
 #[test]
 fn real_config_command_validates_without_starting_a_service() {
-    let result = Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"))
+    let result = Command::new(env!("CARGO_BIN_EXE_vap"))
         .env_clear()
         .env("VAP_COUNTRIES", "JP,SG")
         .args(["container-config"])
@@ -98,7 +98,7 @@ fn real_config_command_validates_without_starting_a_service() {
     );
     let value: AppConfig = serde_json::from_slice(&result.stdout).unwrap();
     assert_eq!(value.countries, ["JP", "SG"]);
-    let result = Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"))
+    let result = Command::new(env!("CARGO_BIN_EXE_vap"))
         .env_clear()
         .env("VAP_TIMEZONE", "Moon/Base")
         .args(["container-config"])

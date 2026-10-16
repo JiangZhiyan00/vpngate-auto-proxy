@@ -5,6 +5,11 @@ from prepare_docker_publish import validate_release
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_program_bytes_select_actual_vap_product(self):
+        with patch.object(prepare_docker_publish.subprocess, 'check_output', return_value=b'product') as command:
+            self.assertEqual(prepare_docker_publish.program_bytes('example/proxy:v1.0.0'), b'product')
+        self.assertEqual(command.call_args.args[0][-1], '/usr/local/bin/vap')
+
     def test_hub_repository_preserves_legal_names(self):
         for image in ['example/proxy.test', 'example/proxy_test', 'team-name/proxy-name',
                       'team_name/proxy', 'localhost-team/proxy', 'ghcr/proxy']:

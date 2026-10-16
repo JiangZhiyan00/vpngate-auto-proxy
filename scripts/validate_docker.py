@@ -1,6 +1,7 @@
 """仅创建和删除带本次归属标签的受控桥接测试资源，不访问公共节点。"""
 import argparse
 import datetime
+import hashlib
 from zoneinfo import ZoneInfo
 import json
 import os
@@ -14,6 +15,7 @@ import time
 import uuid
 
 from docker_profiles import require_profiles
+from image_program import program_bytes
 
 REPO = Path(__file__).resolve().parents[1]
 LABEL = "io.vpngate-auto-proxy.validation"
@@ -42,7 +44,7 @@ def validate_child_capabilities(snapshot):
         # 后台候选可能正在执行 setpriv；只核对已执行目标程序的消费者。
         name = values.get("Name", "").strip()
         if ((identity == 10002 and name != "openvpn")
-                or (identity == 10001 and not name.startswith("vpngate-auto"))):
+                or (identity == 10001 and name != "vap")):
             continue
         expected = 0 if identity == 10001 else 1 << 12
         fields = ("CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb")
@@ -117,10 +119,12 @@ def main():
 
     require_profiles(security, [(options.image, "vpngate-auto-proxy"),
                                 (options.fixture_image, "vpngate-auto-proxy-fixture")])
+    image_identity = json.loads(run("docker", "image", "inspect", options.image).stdout)[0]
 
     token = uuid.uuid4().hex[:12]
     network, fixture, product = (f"vap-validation-{token}-{name}" for name in ["network", "fixture", "product"])
     containers, volumes, network_created = [], [], False
+    stop_exec_codes = []
     (REPO / "validation-output").mkdir(exist_ok=True)
     directory = tempfile.TemporaryDirectory(prefix="docker-", dir=REPO / "validation-output")
     files = Path(directory.name)
@@ -145,7 +149,7 @@ def main():
         return labels.get(LABEL) == token
 
     def status(name):
-        result = run("docker", "exec", name, "vpngate-auto-proxy", "status", "--runtime-dir", "/run/vap", "--json", check=False)
+        result = run("docker", "exec", name, "vap", "status", "--runtime-dir", "/run/vap", "--json", check=False)
         return json.loads(result.stdout) if result.returncode == 0 else None
 
     def ready(name):
@@ -153,6 +157,8 @@ def main():
         while time.monotonic() < deadline:
             value = status(name)
             if value and value["ready"]:
+                assert run("docker", "exec", name, "vap", "status", "--runtime-dir", "/run/vap",
+                           "--json", "--check-ready", check=False).returncode == 0
                 return value
             if run("docker", "inspect", "--format", "{{.State.Running}}", name).stdout.strip() != "true":
                 diagnostic = run("docker", "logs", name, check=False)
@@ -193,7 +199,14 @@ def main():
 
     def stop(name):
         started = time.monotonic()
-        run("docker", "stop", "--timeout", "15", name, timeout=20)
+        result = run("docker", "exec", name, "vap", "stop", "--runtime-dir", "/run/vap",
+                     timeout=15, check=False)
+        # 容器 PID 1 正常结束会终止尚在等待目录回收的 exec 进程。
+        # 137 只有同时满足主进程正常退出、预算及后续完整资源回收才可接受。
+        if result.returncode not in (0, 137):
+            raise RuntimeError("容器内停止请求失败：" + result.stderr[-2000:])
+        stop_exec_codes.append(result.returncode)
+        run("docker", "wait", name, timeout=max(0.1, 15 - (time.monotonic() - started)))
         if run("docker", "inspect", "--format", "{{.State.ExitCode}}", name).stdout.strip() != "0":
             raise RuntimeError("容器停止或资源清理失败")
         if time.monotonic() - started >= 15:
@@ -275,6 +288,9 @@ def main():
                 break
             time.sleep(0.2)
         assert value and value["source"]["fetched_at"] and not value["ready"]
+        excluded_instance = value["instance_id"]
+        assert run("docker", "exec", excluded, "vap", "status", "--runtime-dir", "/run/vap",
+                   "--json", "--check-ready", check=False).returncode == 3
         assert value["candidates"]["total"] == 0
         assert value["last_exit_check"] is None
         assert value["candidates"]["round_selected"] == 0
@@ -320,6 +336,21 @@ def main():
         directory.cleanup()
         if errors:
             raise RuntimeError("受控资源清理失败：" + "、".join(errors))
+    final_identity = json.loads(run("docker", "image", "inspect", options.image).stdout)[0]
+    if final_identity['Id'] != image_identity['Id']:
+        raise RuntimeError("验收期间镜像标签身份发生变化")
+    print(json.dumps({
+        "status": "passed", "image_id": image_identity['Id'],
+        "binary_sha256": hashlib.sha256(program_bytes(image_identity['Id'],
+            'linux/' + image_identity['Architecture'])).hexdigest(),
+        "config_mode": "environment" if options.environment_config else "json",
+        "instances": {"initial": initial['instance_id'], "restored": restored['instance_id'],
+                      "excluded": excluded_instance},
+        "apparmor_enforced": apparmor, "cleanup_passed": True,
+        "vap_status_ready_codes": [0, 3], "vap_stop_validated": True,
+        "container_stop_exec_codes": stop_exec_codes,
+        "authentication_cache_regions_timezone_faults_validated": True,
+    }, ensure_ascii=False), flush=True)
     if options.case == "all":
         result = subprocess.run([sys.executable, str(REPO / "scripts/validate_soak.py"), "--deployment", "docker", "--clients", "5", "--connections", "50",
             "--duration-seconds", str(options.duration_seconds), "--image", options.image, "--fixture-image", options.fixture_image,

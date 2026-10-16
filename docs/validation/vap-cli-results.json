@@ -1,0 +1,197 @@
+{
+  "offline": {
+    "status": "passed",
+    "image_id": "sha256:b63aa842705137f93f4ca044fb9163757922abb70bc25256c9dcd40c06bd5f3d",
+    "architecture": "amd64",
+    "network": "none",
+    "user": "65534:65534",
+    "read_only": true,
+    "cap_drop": "ALL",
+    "no_config_or_secret_mounts": true,
+    "old_entry_absent": true,
+    "checks": [
+      {
+        "arguments": [
+          "help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "help",
+          "run"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "run",
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "help",
+          "status"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "status",
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "help",
+          "stop"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "stop",
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "--version"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "unknown"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "help",
+          "controller"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "help",
+          "container-config"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "help",
+          "unknown"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "controller",
+          "--help"
+        ],
+        "exit_code": 2
+      }
+    ]
+  },
+  "smoke": {
+    "json": {
+      "status": "passed",
+      "image_id": "sha256:b63aa842705137f93f4ca044fb9163757922abb70bc25256c9dcd40c06bd5f3d",
+      "binary_sha256": "b74df8a4ecf1f46d1b10a2777b526aaf3170d25a8603b8ac5e6829bb959f86ce",
+      "config_mode": "json",
+      "instances": {
+        "initial": "17441f78-d51a-4715-a404-245b6d91773e",
+        "restored": "bf096dd0-5c38-442d-8c90-9b1ae0b9d676",
+        "excluded": "f9eec2f7-00b0-4edd-8619-4f8cebc80838"
+      },
+      "apparmor_enforced": false,
+      "cleanup_passed": true,
+      "vap_status_ready_codes": [
+        0,
+        3
+      ],
+      "vap_stop_validated": true,
+      "container_stop_exec_codes": [
+        137,
+        137,
+        137,
+        137
+      ],
+      "authentication_cache_regions_timezone_faults_validated": true
+    },
+    "environment": {
+      "status": "passed",
+      "image_id": "sha256:b63aa842705137f93f4ca044fb9163757922abb70bc25256c9dcd40c06bd5f3d",
+      "binary_sha256": "b74df8a4ecf1f46d1b10a2777b526aaf3170d25a8603b8ac5e6829bb959f86ce",
+      "config_mode": "environment",
+      "instances": {
+        "initial": "1925999d-5dca-4aef-bced-cdf8a67b05f9",
+        "restored": "06e7f409-ff78-49a8-8b29-d9ca3876015b",
+        "excluded": "95bdff13-c3d2-47a2-965f-bdb67069506c"
+      },
+      "apparmor_enforced": false,
+      "cleanup_passed": true,
+      "vap_status_ready_codes": [
+        0,
+        3
+      ],
+      "vap_stop_validated": true,
+      "container_stop_exec_codes": [
+        137,
+        137,
+        137,
+        137
+      ],
+      "authentication_cache_regions_timezone_faults_validated": true
+    }
+  },
+  "root_installation": {
+    "passed": 15,
+    "failed": 0,
+    "network": "none",
+    "image_id": "sha256:868461daa06a949e2040ad888801c9aecc0067b75a6abc82e64e3917a3f6ce18",
+    "production_history_synthesized": false
+  },
+  "distribution": {
+    "status": "passed",
+    "image_id": "sha256:4a045d103a0a7878fe8de8fffba1e7f9010b1f5676835cc32791978cf1e25bdd",
+    "binary_sha256": "b74df8a4ecf1f46d1b10a2777b526aaf3170d25a8603b8ac5e6829bb959f86ce",
+    "scope": "Docker amd64 受控短试及分发材料核验；未重跑三十分钟容量试验",
+    "local_image": "local-validation/vap:v1.0.1",
+    "publication_performed": false,
+    "bundle_sha256": "cce82806862f8583d29a5e8e315652d10edfac28a7f1b78b43fe4663b9fb854e",
+    "verified_bundle_files": 17,
+    "verified_project_files": 1073,
+    "source_archive_sha256": "d2b6facd8fbc09e6a27f32b9d70b80f544fe5707aae49c5dd21e638559042985",
+    "bundle": "validation-output/publish-v1.0.1/bundle-reviewed.tar.gz",
+    "source_archive": "validation-output/publish-v1.0.1/vpngate-source-v1.0.1-reviewed.tar.gz",
+    "contracts_included": true
+  },
+  "regressions": {
+    "rust_passed": 396,
+    "rust_ignored": 37,
+    "rust_failed": 0,
+    "python_run": 232,
+    "python_skipped": 18,
+    "python_failed": 0,
+    "fmt": "passed",
+    "clippy": "passed"
+  }
+}

@@ -4,25 +4,26 @@
 
 当前优先交付容器部署。Debian 12 x86_64 云服务器已在专用安全策略强制模式下通过容器短试及三十分钟、五客户端、五十连接容量验收；第三版实际部署已通过公开出口检测和服务器本机带认证的代理请求。Linux ARM64 隔离容器另有代理、候选调度、故障恢复和长测证据。个人设备经 SSH 转发的带认证请求也已通过；原生进程部署的完整目标矩阵仍待验收；苹果原生后端正在实现，本阶段优先级降低。
 
-目标交付为苹果系统和 Linux 各自的一个可执行文件，允许预装外部隧道程序与系统依赖。Rust 可跨平台编译，但路由、隔离和权限需要各平台独立实现。
+新交付的唯一程序名称为 `vap`，不提供旧命令兼容入口。目标交付为苹果系统和 Linux 各自的一个可执行文件，允许预装外部隧道程序与系统依赖。Rust 可跨平台编译，但路由、隔离和权限需要各平台独立实现。
 
 ## 构建与命令
 
 构建需要 Rust 1.90、系统编译工具链和 TLS 开发库。Linux 服务需要 OpenVPN 2.6、iproute2、nftables、util-linux、CA 证书及管理员权限。运行目录应位于本机文件系统。
 
 ```sh
-cargo build --locked --release
-./target/release/vpngate-auto-proxy --help
+cargo build --locked --release --bin vap
+# Linux：按部署说明核验摘要后无覆盖安装；苹果使用受保护安装流程。
+vap help
 cp config.example.json config.local.json
-sudo ./target/release/vpngate-auto-proxy run --config ./config.local.json
+sudo vap run --config ./config.local.json
 ```
 
 示例配置使用回环监听，运行目录为 `/run/vap`。原生运行前先按[部署说明](docs/deployment.md)准备转发和防火墙。
 
 ```sh
-sudo ./target/release/vpngate-auto-proxy status --runtime-dir /run/vap --json
-sudo ./target/release/vpngate-auto-proxy status --runtime-dir /run/vap --check-ready
-sudo ./target/release/vpngate-auto-proxy stop --runtime-dir /run/vap
+sudo vap status --runtime-dir /run/vap --json
+sudo vap status --runtime-dir /run/vap --check-ready
+sudo vap stop --runtime-dir /run/vap
 ```
 
 普通状态查询在等待节点时仍成功；就绪检查返回 3，只有真实出口验证成功才返回 0。停止默认十五秒以内完成。帮助、版本和本地状态查询不发起额外外网检测。

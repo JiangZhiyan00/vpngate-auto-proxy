@@ -1,5 +1,6 @@
 """从已构建的 x86_64 镜像生成白名单离线验收包，不包含本地凭据。"""
 import argparse
+from image_program import program_bytes
 import datetime
 import hashlib
 import json
@@ -15,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = [
     "scripts/validate_docker.py", "scripts/validate_soak.py", "scripts/soak_client.py",
     "scripts/verify-license-image.py", "scripts/cloud_image_identity.py", "Cargo.lock",
-    "scripts/cloud_deploy.py", "scripts/docker_profiles.py",
+    "scripts/cloud_deploy.py", "scripts/docker_profiles.py", "scripts/image_program.py",
     "tests/fixtures/setup-docker.sh", "tests/fixtures/setup.sh",
     "tests/fixtures/cleanup.sh", "tests/fixtures/services.py",
     "deploy/apparmor/vpngate-auto-proxy", "deploy/compose.apparmor.yaml",
@@ -48,11 +49,7 @@ def main():
     if inventory["runtime_image"]["id"] != images[0]["id"]:
         raise RuntimeError("请先为指定运行镜像重新生成许可清单并完成镜像原文核验")
     subprocess.run(["python3", str(ROOT / "scripts/verify-license-image.py"), "--image", options.image], check=True)
-    binary = subprocess.check_output([
-        "docker", "run", "--rm", "--platform", "linux/amd64", "--network", "none",
-        "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--read-only",
-        "--entrypoint", "cat", options.image, "/usr/local/bin/vpngate-auto-proxy",
-    ])
+    binary = program_bytes(options.image)
     if binary[:6] != b"\x7fELF\x02\x01" or int.from_bytes(binary[18:20], "little") != 62:
         raise RuntimeError("镜像内程序不是 x86_64 ELF 可执行文件")
     destination = options.output.resolve()

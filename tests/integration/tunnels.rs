@@ -24,7 +24,7 @@ async fn managed_tcp_udp_tunnels_validate_routes_and_release_every_owned_resourc
         lock.clone(),
     )
     .unwrap()
-    .with_executable(env!("CARGO_BIN_EXE_vpngate-auto-proxy").into());
+    .with_executable(env!("CARGO_BIN_EXE_vap").into());
     let snapshot = fetch_snapshot(
         &"http://127.0.0.1:18080/".parse().unwrap(),
         Duration::from_secs(5),
@@ -91,10 +91,7 @@ async fn managed_tcp_udp_tunnels_validate_routes_and_release_every_owned_resourc
             assert!(output.status.success());
             assert_eq!(output.stdout, b"204");
             worker
-                .attach_socks(
-                    std::path::Path::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy")),
-                    58,
-                )
+                .attach_socks(std::path::Path::new(env!("CARGO_BIN_EXE_vap")), 58)
                 .unwrap();
         }
         let socket = slot.worker.lock().await.record.socket_path.clone();

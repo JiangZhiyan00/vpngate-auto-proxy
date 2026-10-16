@@ -1,0 +1,343 @@
+{
+  "recorded_date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "tasks": [
+    "T028",
+    "T029"
+  ],
+  "offline": {
+    "status": "passed",
+    "image_id": "sha256:44dab919bf721f60a81b5aa4745c6bbe374cbd6f6e8890d6484bef7c166c1423",
+    "architecture": "amd64",
+    "network": "none",
+    "user": "65534:65534",
+    "read_only": true,
+    "cap_drop": "ALL",
+    "no_config_or_secret_mounts": true,
+    "old_entry_absent": true,
+    "checks": [
+      {
+        "arguments": [
+          "help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "-h"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "help",
+          "run"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "run",
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "run",
+          "-h"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "help",
+          "status"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "status",
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "status",
+          "-h"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "help",
+          "stop"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "stop",
+          "--help"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "stop",
+          "-h"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "--version"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [
+          "-V"
+        ],
+        "exit_code": 0
+      },
+      {
+        "arguments": [],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "unknown"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "run"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "status"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "stop"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "help",
+          "controller"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "help",
+          "container-config"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "help",
+          "unknown"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "controller",
+          "--help"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "run",
+          "--",
+          "--help"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "status",
+          "--",
+          "--help"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "stop",
+          "--",
+          "-h"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "--",
+          "--help"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "run",
+          "--config",
+          "/missing",
+          "--",
+          "--help"
+        ],
+        "exit_code": 2
+      },
+      {
+        "arguments": [
+          "run",
+          "--unknown",
+          "--help"
+        ],
+        "exit_code": 2
+      }
+    ]
+  },
+  "smoke": {
+    "json": {
+      "status": "passed",
+      "image_id": "sha256:44dab919bf721f60a81b5aa4745c6bbe374cbd6f6e8890d6484bef7c166c1423",
+      "binary_sha256": "ffcb4c91ab3204a0e03611695e0ee114adc77707a56f672847cae9b4b291d3da",
+      "config_mode": "json",
+      "instances": {
+        "initial": "cffec134-98f4-4898-90bd-cfc3ce24f48a",
+        "restored": "5d4b3c56-b466-439e-9f5f-6d678a86212f",
+        "excluded": "111948fe-1bd5-4e70-bb0c-9cb388b6d46a"
+      },
+      "apparmor_enforced": false,
+      "cleanup_passed": true,
+      "vap_status_ready_codes": [
+        0,
+        3
+      ],
+      "vap_stop_validated": true,
+      "container_stop_exec_codes": [
+        137,
+        137,
+        137,
+        137
+      ],
+      "authentication_cache_regions_timezone_faults_validated": true
+    },
+    "environment": {
+      "status": "passed",
+      "image_id": "sha256:44dab919bf721f60a81b5aa4745c6bbe374cbd6f6e8890d6484bef7c166c1423",
+      "binary_sha256": "ffcb4c91ab3204a0e03611695e0ee114adc77707a56f672847cae9b4b291d3da",
+      "config_mode": "environment",
+      "instances": {
+        "initial": "7f617f73-ac99-401c-93ef-078c3e97c9ec",
+        "restored": "93dd9d77-fc84-406d-afeb-02860351de5f",
+        "excluded": "356b3272-1009-4286-803a-c0ff97b439b1"
+      },
+      "apparmor_enforced": false,
+      "cleanup_passed": true,
+      "vap_status_ready_codes": [
+        0,
+        3
+      ],
+      "vap_stop_validated": true,
+      "container_stop_exec_codes": [
+        137,
+        137,
+        137,
+        137
+      ],
+      "authentication_cache_regions_timezone_faults_validated": true
+    }
+  },
+  "root_installation": {
+    "passed": 18,
+    "production_passed": 15,
+    "components_passed": 3,
+    "failed": 0,
+    "network": "none",
+    "image_id": "sha256:868461daa06a949e2040ad888801c9aecc0067b75a6abc82e64e3917a3f6ce18",
+    "sudo_uid_zero_accepts_root_source": true,
+    "sudo_uid_zero_does_not_allow_unrelated_uid": true,
+    "permissions_digest_overwrite_and_malformed_values_still_rejected": true
+  },
+  "regressions": {
+    "rust_passed": 398,
+    "rust_ignored": 37,
+    "rust_failed": 0,
+    "python_run": 235,
+    "python_skipped": 20,
+    "python_failed": 0,
+    "fmt": "passed",
+    "clippy": "passed",
+    "cli_contracts_passed": 19
+  },
+  "source_files": {
+    "scripts/install-vap.py": "eedc14cd50566a528f59983ad1eab8914460fbf7a17056fd084ed7f9ea2a04f6",
+    "src/main.rs": "3a13d6b346661d9e8790c290e1a71a1bdd05472381efa29b616c12a4c8008e6b",
+    "scripts/test_install_vap.py": "4b5ca3174874d79992ed5ec7452ba5b70b8597369d8c4f7b7bd7053cb6386899",
+    "tests/contracts/cli.rs": "0726cf15444d1e49809e3b026436882ff73bdba461bfd0c6b868008798e7ee3e",
+    "specs/002-rename-cli-vap/contracts/cli.md": "27cbd3ccf990325bf15c0ec1b8846d15aea0deff6e4672296e78de4ff75b30b2",
+    "specs/002-rename-cli-vap/contracts/deployment.md": "7aa6d96c259221a8a700d66345a4132b5fcd8f2fa7af96ba28e8a0ce2067c791"
+  },
+  "publication_performed": false,
+  "target_native_and_enforced_apparmor_validated": false,
+  "distribution": {
+    "status": "passed",
+    "image_id": "sha256:51c4bed6e8c6ff3ee50818fbed4615768dbed8505d4a370d4df0c2294c64b548",
+    "binary_sha256": "ffcb4c91ab3204a0e03611695e0ee114adc77707a56f672847cae9b4b291d3da",
+    "scope": "Docker amd64 受控短试及分发材料核验；未重跑三十分钟容量试验",
+    "local_image": "local-validation/vap:v1.0.3",
+    "bundle": "validation-output/publish-v1.0.3/bundle.tar.gz",
+    "bundle_sha256": "8035a681a560162f87de7bf8ffc0fe6e237f58aacd46cac1c884b5429222892b",
+    "source_archive": "validation-output/publish-v1.0.3/vpngate-source-v1.0.3.tar.gz",
+    "source_archive_sha256": "07fdd0afe5bf037c2b59e52aa063b673d22891f4bae0e81ef288f683b0c69c66",
+    "verified_bundle_files": 17,
+    "verified_project_files": 1073,
+    "project_source_matches_workspace": true,
+    "publication_performed": false,
+    "smoke": {
+      "status": "passed",
+      "image_id": "sha256:51c4bed6e8c6ff3ee50818fbed4615768dbed8505d4a370d4df0c2294c64b548",
+      "binary_sha256": "ffcb4c91ab3204a0e03611695e0ee114adc77707a56f672847cae9b4b291d3da",
+      "config_mode": "environment",
+      "instances": {
+        "initial": "8e3871a4-c1fa-49f3-9f0b-7adb7b628c12",
+        "restored": "4f89b4f3-4f81-4193-99e2-b00196f30fe3",
+        "excluded": "38032cb9-b0fd-4ef6-8916-ba65655fd17a"
+      },
+      "apparmor_enforced": false,
+      "cleanup_passed": true,
+      "vap_status_ready_codes": [
+        0,
+        3
+      ],
+      "vap_stop_validated": true,
+      "container_stop_exec_codes": [
+        137,
+        137,
+        137,
+        137
+      ],
+      "authentication_cache_regions_timezone_faults_validated": true
+    }
+  }
+}

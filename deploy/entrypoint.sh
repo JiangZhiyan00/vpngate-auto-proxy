@@ -5,7 +5,7 @@ if [ "$#" = 0 ]; then
         environment)
             umask 077
             config_file=$(mktemp /tmp/vap-container-config.XXXXXX)
-            if ! /usr/local/bin/vpngate-auto-proxy container-config > "$config_file"; then
+            if ! /usr/local/bin/vap container-config > "$config_file"; then
                 rm -f "$config_file"
                 exit 2
             fi
@@ -15,4 +15,4 @@ if [ "$#" = 0 ]; then
         *) echo "容器配置模式必须为 file 或 environment" >&2; exit 2 ;;
     esac
 fi
-exec /usr/local/bin/vpngate-auto-proxy "$@"
+exec /usr/local/bin/vap "$@"

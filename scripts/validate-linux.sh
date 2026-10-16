@@ -24,7 +24,7 @@ case "$case_name" in
   for scenario in us1 us2 us3 us4; do
    "$repo_dir/scripts/validate-linux.sh" --case "$scenario" --duration-seconds "$duration"
   done
-  soak_binary="${CARGO_TARGET_DIR:-$repo_dir/target}/release/vpngate-auto-proxy"
+  soak_binary="${CARGO_TARGET_DIR:-$repo_dir/target}/release/vap"
   "$repo_dir/scripts/validate-soak.sh" --deployment native --clients 5 --connections 50 --duration-seconds "$duration" --binary "$soak_binary" --output "${VAP_SOAK_REPORT:-/tmp/vap-soak-native-report.json}"
   echo "本次环境及指定时长的聚合用例通过；目标原生矩阵、安全策略与完整长测仍须独立验收。"
   exit 0 ;;
