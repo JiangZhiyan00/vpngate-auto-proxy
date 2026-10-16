@@ -7,7 +7,7 @@ use std::time::Duration;
 use tokio::{io::AsyncWriteExt, net::UnixStream};
 use vpngate_auto_proxy::cli::*;
 fn command(service: &ServiceFixture, args: &[&str]) -> std::process::Output {
-    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"));
+    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_vap"));
     command
         .args(args)
         .arg("--runtime-dir")
@@ -305,7 +305,7 @@ async fn missing_network_capability_fails_before_waiting_for_nodes() {
             "--bounding-set=-net_admin",
             "--inh-caps=-net_admin",
             "--ambient-caps=-net_admin",
-            env!("CARGO_BIN_EXE_vpngate-auto-proxy"),
+            env!("CARGO_BIN_EXE_vap"),
             "run",
             "--config",
         ])
@@ -349,7 +349,7 @@ async fn missing_tool_is_reported_before_waiting_and_leaves_no_runtime() {
             "mount --bind /dev/null \"$1\" && exec \"$2\" run --config \"$3\"",
             "sh",
             tool.trim(),
-            env!("CARGO_BIN_EXE_vpngate-auto-proxy"),
+            env!("CARGO_BIN_EXE_vap"),
         ])
         .arg(&file)
         .kill_on_drop(true)

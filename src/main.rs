@@ -3,7 +3,10 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
-    version,
+    name = "vap",
+    bin_name = "vap",
+    disable_version_flag = true,
+    disable_help_subcommand = true,
     about = "自动节点代理",
     help_template = "{about}\n\n用法：{usage}\n\n{all-args}"
 )]
@@ -139,8 +142,93 @@ enum Command {
         authorization: uuid::Uuid,
     },
 }
+
+fn public_help(target: Option<&str>) -> Option<&'static str> {
+    match target {
+        None => Some(
+            "自动节点代理\n\n用法：vap <操作> [参数]\n\n操作：\n  run       前台启动代理\n  status    查询本地实例状态\n  stop      正常停止所属实例并等待资源回收\n  help      显示总览或指定操作的帮助\n\n选项：\n  -h, --help       显示帮助\n  -V, --version    显示实际程序版本\n\n示例：\n  vap run --config ./config.local.json\n  vap status --runtime-dir /run/vap --json --check-ready\n  vap stop --runtime-dir /run/vap\n  vap help status\n",
+        ),
+        Some("run") => Some(
+            "前台启动代理\n\n用法：vap run --config <路径>\n\n参数：\n  --config <路径>    必填，经过校验的代理 JSON 配置文件路径\n  -h, --help        显示帮助，不读取配置或启动实例\n\n示例：\n  vap run --config ./config.local.json\n",
+        ),
+        Some("status") => Some(
+            "查询本地实例状态\n\n用法：vap status --runtime-dir <路径> [--json] [--check-ready]\n\n参数：\n  --runtime-dir <路径>    必填，与实例配置一致的私有运行目录\n  --json                 输出一个机器可读的状态 JSON\n  --check-ready          查询已有出口就绪状态；就绪返回 0，存活但未就绪返回 3\n  -h, --help             显示帮助，不连接控制通道\n\n说明：普通状态查询不以未就绪判定实例死亡；查询不会额外发起出口检测。\n\n示例：\n  vap status --runtime-dir /run/vap --json --check-ready\n",
+        ),
+        Some("stop") => Some(
+            "正常停止所属实例并等待资源回收\n\n用法：vap stop --runtime-dir <路径>\n\n参数：\n  --runtime-dir <路径>    必填，与实例配置一致的私有运行目录\n  -h, --help             显示帮助，不发送停止请求\n\n说明：正常回收或实例已停止返回 0，通信失败返回 1，回收失败返回 4。\n\n示例：\n  vap stop --runtime-dir /run/vap\n",
+        ),
+        _ => None,
+    }
+}
+
+fn parse_arguments() -> Result<Arguments, std::process::ExitCode> {
+    use clap::error::ErrorKind;
+    let args: Vec<_> = std::env::args_os().collect();
+    if args.len() == 1 {
+        eprintln!(
+            "参数错误：缺少必填参数或操作。\n用法：vap <操作> [参数]\n请运行 vap help 查看公开操作。"
+        );
+        return Err(std::process::ExitCode::from(2));
+    }
+    let first = args.get(1).and_then(|arg| arg.to_str());
+    if first == Some("help") {
+        let target = if args.len() > 3 {
+            None
+        } else {
+            match args.get(2) {
+                Some(arg) => arg.to_str().map(Some),
+                None => Some(None),
+            }
+        };
+        if let Some(text) = target.and_then(public_help) {
+            print!("{text}");
+            return Err(std::process::ExitCode::SUCCESS);
+        }
+        eprintln!("参数错误：帮助目标无效。请运行 vap help 查看公开操作。");
+        return Err(std::process::ExitCode::from(2));
+    }
+    if args.len() == 2 && matches!(first, Some("--version" | "-V")) {
+        println!("vap {}（自动节点代理）", env!("CARGO_PKG_VERSION"));
+        return Err(std::process::ExitCode::SUCCESS);
+    }
+    Arguments::try_parse_from(&args).map_err(|error| {
+        // 由解析器识别选项及 -- 边界，只替换公开帮助的显示内容。
+        if error.kind() == ErrorKind::DisplayHelp {
+            let target = if matches!(first, Some("--help" | "-h")) && args.len() == 2 {
+                Some(None)
+            } else {
+                first
+                    .filter(|name| ["run", "status", "stop"].contains(name))
+                    .map(Some)
+            };
+            if let Some(text) = target.and_then(public_help) {
+                print!("{text}");
+                return std::process::ExitCode::SUCCESS;
+            }
+            eprintln!("参数错误：帮助目标无效。请运行 vap help 查看公开操作。");
+            return std::process::ExitCode::from(2);
+        }
+        let reason = match error.kind() {
+            ErrorKind::MissingRequiredArgument | ErrorKind::MissingSubcommand => {
+                "缺少必填参数或操作"
+            }
+            ErrorKind::InvalidSubcommand => "未知操作",
+            ErrorKind::UnknownArgument => "未知参数",
+            ErrorKind::InvalidValue | ErrorKind::ValueValidation => "参数值无效",
+            _ => "参数组合或格式无效",
+        };
+        eprintln!(
+            "参数错误：{reason}。请运行 vap help 查看公开操作；例如 vap help status 可查看状态参数。"
+        );
+        std::process::ExitCode::from(2)
+    })
+}
+
 fn main() -> std::process::ExitCode {
-    let arguments = Arguments::parse();
+    let arguments = match parse_arguments() {
+        Ok(arguments) => arguments,
+        Err(code) => return code,
+    };
     if matches!(arguments.command, Command::ContainerConfig) {
         let result = vpngate_auto_proxy::config::AppConfig::container_from_environment(|name| {
             match std::env::var(name) {

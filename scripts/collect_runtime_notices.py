@@ -64,7 +64,7 @@ def main():
     base = ['docker', 'run', '--rm', '--platform', 'linux/amd64', '--network', 'none',
             '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--read-only']
     linked = subprocess.check_output(base + ['--entrypoint', 'scanelf', options.image,
-                                             '-n', '/usr/local/bin/vpngate-auto-proxy'], text=True)
+                                             '-n', '/usr/local/bin/vap'], text=True)
     ownership = subprocess.check_output(base + ['--entrypoint', 'sh', options.image, '-c',
         'apk info --who-owns /usr/lib/libssl.so.3 /usr/lib/libcrypto.so.3 /usr/lib/libgcc_s.so.1 /lib/libc.musl-x86_64.so.1'], text=True)
     if not all(library in linked for library in ('libssl.so.3', 'libcrypto.so.3', 'libgcc_s.so.1', 'libc.musl-x86_64.so.1')):

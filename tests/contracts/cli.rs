@@ -8,7 +8,7 @@ use std::{
     time::Duration,
 };
 fn invoke(args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"))
+    Command::new(env!("CARGO_BIN_EXE_vap"))
         .args(args)
         .env("PATH", "/不存在的工具目录")
         .output()
@@ -218,7 +218,7 @@ fn actual_deployment_identity_reports_real_user_and_refuses_inherited_environmen
     std::fs::set_permissions(&worker, std::fs::Permissions::from_mode(0o750)).unwrap();
     std::fs::write(worker.join("identity-check"), b"").unwrap();
     let authorization = uuid::Uuid::new_v4();
-    let result = Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"))
+    let result = Command::new(env!("CARGO_BIN_EXE_vap"))
         .args([
             "mac-deployment-identity",
             "--authorization",
@@ -366,4 +366,138 @@ fn human_status_uses_instance_timezone_and_old_payload_defaults_to_shanghai() {
         assert!(output.status.success());
         assert!(String::from_utf8(output.stdout).unwrap().contains(expected));
     }
+}
+
+#[test]
+fn public_operations_keep_required_paths() {
+    for args in [&["run"][..], &["status"][..], &["stop"][..]] {
+        let output = invoke(args);
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+    }
+}
+
+#[test]
+fn public_help_is_chinese_complete_and_has_no_filesystem_side_effects() {
+    let directory = tempfile::tempdir().unwrap();
+    for args in [
+        vec!["help"],
+        vec!["--help"],
+        vec!["help", "run"],
+        vec!["run", "--help"],
+        vec!["help", "status"],
+        vec!["status", "--help"],
+        vec!["help", "stop"],
+        vec!["stop", "--help"],
+    ] {
+        let result = Command::new(env!("CARGO_BIN_EXE_vap"))
+            .args(&args)
+            .current_dir(directory.path())
+            .env_clear()
+            .output()
+            .unwrap();
+        assert_eq!(result.status.code(), Some(0), "{args:?}");
+        assert!(result.stderr.is_empty());
+        let text = String::from_utf8(result.stdout).unwrap();
+        assert!(text.contains("用法：vap"));
+        assert!(text.contains("帮助"));
+        for hidden in [
+            "controller",
+            "worker",
+            "namespace-setup",
+            "container-config",
+            "mac-program",
+        ] {
+            assert!(!text.contains(hidden));
+        }
+        if args.contains(&"run") {
+            assert!(text.contains("--config") && text.contains("必填"));
+        }
+        if args.contains(&"status") {
+            assert!(text.contains("--runtime-dir") && text.contains("--json"));
+            assert!(text.contains("--check-ready") && text.contains("3"));
+        }
+    }
+    let version = invoke(&["--version"]);
+    let text = String::from_utf8(version.stdout).unwrap();
+    assert!(
+        text.starts_with("vap ")
+            && text.contains(env!("CARGO_PKG_VERSION"))
+            && text.contains("自动节点代理")
+    );
+    assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
+}
+
+#[test]
+fn invalid_and_hidden_help_requests_are_chinese_parameter_errors() {
+    for args in [
+        vec![],
+        vec!["unknown"],
+        vec!["run"],
+        vec!["status"],
+        vec!["stop"],
+        vec!["status", "--bad"],
+        vec!["help", "unknown"],
+        vec!["help", "controller"],
+        vec!["help", "worker"],
+        vec!["help", "namespace-setup"],
+        vec!["help", "container-config"],
+        vec!["help", "mac-program"],
+        vec!["controller", "--help"],
+        vec!["help", "run", "extra"],
+    ] {
+        let result = invoke(&args);
+        assert_eq!(result.status.code(), Some(2), "{args:?}");
+        assert!(result.stdout.is_empty());
+        let error = String::from_utf8(result.stderr).unwrap();
+        assert!(
+            error.contains("参数错误") && error.contains("vap help"),
+            "{args:?}: {error}"
+        );
+        assert!(!error.contains("Usage:") && !error.contains("error:"));
+        assert!(!error.contains("vap help run/status/stop"));
+    }
+}
+
+#[test]
+fn no_operation_prints_chinese_usage_without_creating_runtime() {
+    let directory = tempfile::tempdir().unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_vap"))
+        .current_dir(directory.path())
+        .env_clear()
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    let error = String::from_utf8(output.stderr).unwrap();
+    assert!(error.contains("缺少必填参数或操作"));
+    assert!(error.contains("用法：vap <操作> [参数]"));
+    assert!(error.contains("vap help"));
+    assert!(!error.contains("vap help run/status/stop"));
+    assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
+}
+
+#[test]
+fn help_flags_after_option_terminator_are_not_help_requests() {
+    let directory = tempfile::tempdir().unwrap();
+    for args in [
+        vec!["run", "--", "--help"],
+        vec!["status", "--", "--help"],
+        vec!["stop", "--", "-h"],
+        vec!["--", "--help"],
+        vec!["run", "--config", "/不存在的配置", "--", "--help"],
+        vec!["run", "--unknown", "--help"],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_vap"))
+            .args(&args)
+            .current_dir(directory.path())
+            .env_clear()
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        assert!(output.stdout.is_empty(), "{args:?}");
+        let error = String::from_utf8(output.stderr).unwrap();
+        assert!(error.contains("参数错误") && error.contains("vap help"));
+    }
+    assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
 }

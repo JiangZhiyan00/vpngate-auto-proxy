@@ -11,7 +11,7 @@ import uuid
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BINARY = ROOT / "target/debug/vpngate-auto-proxy"
+BINARY = ROOT / "target/debug/vap"
 
 
 @unittest.skipUnless(sys.platform == "darwin" and BINARY.exists(), "需要已构建的苹果系统可执行文件")

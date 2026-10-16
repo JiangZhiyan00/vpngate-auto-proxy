@@ -78,7 +78,7 @@ async fn creates_guarded_namespace_and_cleans_only_owned_resources() {
             transport,
         };
         // 测试进程路径由 Cargo 提供，独立调用程序完成命名空间设置。
-        let binary = std::path::Path::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"));
+        let binary = std::path::Path::new(env!("CARGO_BIN_EXE_vap"));
         let result = setup_with_binary(&a, &endpoint, "vfixture0", binary).await;
         if result.is_err() {
             let _ = cleanup(&a).await;

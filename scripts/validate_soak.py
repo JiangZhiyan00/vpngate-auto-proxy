@@ -126,7 +126,7 @@ class Environment:
                     "原生容量验收需要显式授权的专用 Linux 管理员环境")
             # 降权后的控制进程需要穿过测试父目录；秘密文件仍单独保持 0600。
             self.files.chmod(0o755)
-            self.binary = Path(self.options.binary or REPO / "target/release/vpngate-auto-proxy").resolve()
+            self.binary = Path(self.options.binary or REPO / "target/release/vap").resolve()
             require(self.binary.is_file(), "缺少本机 Linux 可执行文件，请先发布构建或指定 --binary")
             self.network_baseline = self.baseline()
             self.runtime_description = {"system": platform.system(), "architecture": platform.machine(),
@@ -226,7 +226,7 @@ class Environment:
             args = [str(self.binary), "status", "--runtime-dir", str(self.files / "run"), "--json"]
         else:
             require(run("docker", "inspect", "--format", "{{.State.Running}}", self.product).stdout.strip() == "true", "容量试验中服务容器提前退出")
-            args = ["docker", "exec", self.product, "vpngate-auto-proxy", "status", "--runtime-dir", "/run/vap", "--json"]
+            args = ["docker", "exec", self.product, "vap", "status", "--runtime-dir", "/run/vap", "--json"]
         result = run(*args, check=False)
         return json.loads(result.stdout) if result.returncode == 0 else None
 

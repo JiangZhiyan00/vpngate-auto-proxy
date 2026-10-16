@@ -5,7 +5,7 @@ from validate_docker import validate_child_capabilities
 
 
 def process(uid, mask):
-    name = 'openvpn' if uid == 10002 else 'vpngate-auto-pr'
+    name = 'openvpn' if uid == 10002 else 'vap'
     return (f'Name:\t{name}\nUid:\t{uid}\t{uid}\t{uid}\t{uid}\n' +
             ''.join(f'{field}:\t{mask:016x}\n' for field in
                     ('CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb')) +

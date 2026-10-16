@@ -79,7 +79,7 @@ docker compose up -d
 检查出口就绪及日志：
 
 ```sh
-docker compose exec -T proxy vpngate-auto-proxy status --runtime-dir /run/vap --json --check-ready
+docker compose exec -T proxy vap status --runtime-dir /run/vap --json --check-ready
 docker compose logs --tail 100 proxy
 ```
 

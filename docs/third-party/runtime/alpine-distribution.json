@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "source_image_id": "sha256:960ccc2f98935ef1142fb1857a99ad98f5a5cbd69283d2101fb048173fed4c11",
+  "source_image_id": "sha256:44dab919bf721f60a81b5aa4745c6bbe374cbd6f6e8890d6484bef7c166c1423",
   "status": "passed",
-  "linked_libraries": " TYPE   NEEDED FILE \nET_DYN libssl.so.3,libcrypto.so.3,libgcc_s.so.1,libc.musl-x86_64.so.1 /usr/local/bin/vpngate-auto-proxy \n",
+  "linked_libraries": " TYPE   NEEDED FILE \nET_DYN libssl.so.3,libcrypto.so.3,libgcc_s.so.1,libc.musl-x86_64.so.1 /usr/local/bin/vap \n",
   "library_package_ownership": "/usr/lib/libssl.so.3 is owned by libssl3-3.5.8-r0\n/usr/lib/libcrypto.so.3 is owned by libcrypto3-3.5.8-r0\n/usr/lib/libgcc_s.so.1 is owned by libgcc-14.2.0-r6\n/lib/libc.musl-x86_64.so.1 is owned by musl-1.2.5-r12\n",
   "system_origins": 33,
   "notices": [

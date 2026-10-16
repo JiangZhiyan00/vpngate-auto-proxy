@@ -11,7 +11,7 @@ import unittest
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = ROOT / 'target/debug/vpngate-auto-proxy'
+APP = ROOT / 'target/debug/vap'
 spec = importlib.util.spec_from_file_location('dependency_builder', ROOT / 'scripts/prepare-macos-dependency.py')
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)

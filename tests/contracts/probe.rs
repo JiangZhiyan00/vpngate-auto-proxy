@@ -22,7 +22,7 @@ async fn actual_hidden_macos_probe_uses_the_private_worker_and_correlates_result
     let (parent, control) = std::os::unix::net::UnixStream::pair().unwrap();
     let authorization = uuid::Uuid::new_v4();
     let generation = uuid::Uuid::new_v4();
-    let mut child = Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_vap"))
         .arg("mac-probe")
         .env_clear()
         .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")

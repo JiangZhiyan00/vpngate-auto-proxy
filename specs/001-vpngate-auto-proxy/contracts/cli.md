@@ -1,6 +1,6 @@
 # 命令行与状态契约
 
-这是实施后必须满足的接口，不表示当前仓库已有可运行程序。命令名为 `vpngate-auto-proxy`。
+当前公开命令名称由 [002 命令契约](../../002-rename-cli-vap/contracts/cli.md)替代，唯一入口为 `vap`；以下网络与生命周期约定继续适用，历史验证不回写。
 默认人类输出为简体中文，时间按实例配置时区显示，默认上海；机器输出时间仍使用 UTC，新增 timezone 字段表示实例显示时区。旧状态缺少该字段时默认上海。
 不提供网页、管理 TCP 端口或远程停止接口。
 
@@ -12,12 +12,12 @@
 
 | 命令 | 行为 |
 | --- | --- |
-| `--help`、`--version` | 无须特权，不连接网络 |
-| `run --config PATH` | 前台运行；检查配置、权限、依赖、端口；初始化后持续服务 |
-| `status --runtime-dir PATH` | 查询本地控制套接字，显示运行状态 |
-| `status --runtime-dir PATH --json` | 标准输出一个 JSON 对象，不混入日志 |
-| `status --runtime-dir PATH --check-ready` | 已就绪返回 0；未就绪返回 3；不发起额外外网检测 |
-| `stop --runtime-dir PATH` | 请求正常停止并等待资源回收，不向不明 pid 发信号 |
+| `vap --help`、`vap --version` | 无须特权，不连接网络 |
+| `vap run --config PATH` | 前台运行；检查配置、权限、依赖、端口；初始化后持续服务 |
+| `vap status --runtime-dir PATH` | 查询本地控制套接字，显示运行状态 |
+| `vap status --runtime-dir PATH --json` | 标准输出一个 JSON 对象，不混入日志 |
+| `vap status --runtime-dir PATH --check-ready` | 已就绪返回 0；未就绪返回 3；不发起额外外网检测 |
+| `vap stop --runtime-dir PATH` | 请求正常停止并等待资源回收，不向不明 pid 发信号 |
 
 不要求后台守护命令；原生由用户前台启动或外部服务管理器托管，容器由 PID 1 转发信号。
 内部网络辅助和工作进程子命令不作为用户接口，不接受未经授权的任意命令或文件路径。

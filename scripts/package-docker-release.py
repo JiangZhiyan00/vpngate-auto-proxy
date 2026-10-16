@@ -1,5 +1,6 @@
 """仅打包已核验的产品镜像和完整来源材料，不分发受控夹具或能力实验镜像。"""
 import argparse
+from image_program import program_bytes
 import datetime
 import hashlib
 import json
@@ -21,7 +22,9 @@ DEPLOY_FILES = [
 SOURCE_FILES = ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'Dockerfile',
                 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'README.md', '.dockerignore', '.gitignore', '.env.example',
                 'config.example.json', 'compose.yaml', 'docs/deployment.md', 'docs/reuse-map.md',
-                '.github/workflows/docker-publish.yml', 'docs/dockerhub-release.md']
+                '.github/workflows/docker-publish.yml', 'docs/dockerhub-release.md',
+                'specs/002-rename-cli-vap/contracts/cli.md',
+                'specs/002-rename-cli-vap/contracts/deployment.md']
 SOURCE_DIRECTORIES = ['src', 'scripts', 'tests', 'examples', 'deploy', 'docs/third-party']
 
 
@@ -63,9 +66,7 @@ def main():
             or inventory.get('distribution_review_scope', {}).get('image_id') != image['Id']):
         raise ValueError('当前镜像的公开分发材料审查尚未完成')
     subprocess.run(['python3', str(ROOT / 'scripts/verify-license-image.py'), '--image', options.image], check=True)
-    binary = subprocess.check_output(['docker', 'run', '--rm', '--platform', 'linux/amd64', '--network', 'none',
-                                     '--cap-drop', 'ALL', '--read-only', '--entrypoint', 'cat', options.image,
-                                     '/usr/local/bin/vpngate-auto-proxy'])
+    binary = program_bytes(options.image)
     if hashlib.sha256(binary).hexdigest() != validation['binary_sha256']:
         raise ValueError('最终程序与发布验证摘要不一致')
     destination = options.output.resolve()

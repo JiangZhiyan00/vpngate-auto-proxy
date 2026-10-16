@@ -6,6 +6,40 @@
 
 ## 原生准备
 
+新交付只提供 `vap`，旧命令没有兼容别名。先使用 `vap help` 或 `vap help status` 查看中文操作说明；产品包/库、镜像、策略、数据目录身份保持原值。
+
+### Linux 无覆盖安装
+
+先从明确选定的发布/构建材料获得程序 SHA256，在管理员终端执行以下命令，替换源的绝对路径及预期摘要：
+
+```sh
+sudo python3 scripts/install-vap.py install \
+  --source /绝对路径/vap --sha256 选定材料中的64位小写摘要 \
+  --install-dir /usr/local/bin
+vap help
+```
+
+实际和有效用户都须为管理员。目标目录须已存在、root:root、0755；祖先链由管理员管理，不可被组或其他用户写入，没有链接或特殊权限。源须为 1 字节至 64 MiB 的独立普通文件，不能有链接、危险权限或组/其他用户写权限；属主只允许 root，或管理员调用环境明确的非零 SUDO_UID。安装从同一描述符核验快照及摘要，不执行候选，不复制扩展属性、访问控制列表或能力。安装目录及 PATH 任一同名节点均拒绝，包括重复安装；不自动创建或修正目录，不提供强制覆盖参数。PATH 空项、相对项、不可信链接及无法核验目录也拒绝。
+
+管理员通过 sudo 调用时，`SUDO_UID=0` 是有效值，仍只允许 root 源文件；只有合法非零值才扩展允许的源属主。此字段不改变目标目录权限、摘要或禁止覆盖的检查。
+
+旧入口退休必须作为单独明确操作，先用原管理流程正常停止所有所属实例。只有可信历史安装记录、对应发布材料和可复核正常停止/回收证明齐备，才可执行：
+
+```sh
+sudo python3 scripts/install-vap.py retire \
+  --entry /usr/local/bin/vpngate-auto-proxy \
+  --installation-record /受保护目录/installation.json \
+  --artifact /受保护目录/release.json --stopped-proof /受保护目录/stopped.json
+```
+
+证据格式及消费者核对范围见[退休证据契约](../specs/002-rename-cli-vap/contracts/deployment.md#实现的退休证据格式)。手工旧部署没有可信记录时拒绝自动退休，不补造历史、不按文件名删除。退休只移除已证明归属的指定公开节点；记录、来源、备份及历史受保护程序保持原状。退休成功后再无覆盖安装新程序，才可报告升级完成。现有旧部署没有被本轮测试自动认定为可退休。
+
+退休路径仅支持 `/usr/local/bin`、`/usr/bin` 或 `/opt/<应用>/bin` 中的旧公开文件；实际父目录必须匹配，不扫描或进入其中的备份、数据和历史子目录。`<应用>` 不能是 backup、backups、data、history、versions（不区分大小写）。目录位置符合约束也必须继续通过完整归属及停止证明核验。
+
+### 苹果受保护安装
+
+苹果继续采用既有受保护程序安装及依赖部署流程。构建产物为 `target/release/vap`，内部受保护安装生成的记录和返回路径 basename 为 `vap`；固定父目录及版本摘要目录不变。核验返回路径后，将其所在目录加入 PATH，再运行 `vap help`；不创建旧名链接或包装器。普通 `cargo install` 仅供开发验证，不能替代管理员安装及真实后端验收。苹果完整验收仍后置。
+
 安装 Rust 1.90 及编译工具链、TLS 开发库后执行 `cargo build --locked --release`。运行需要 OpenVPN 2.6、iproute2、nftables、util-linux（含 setpriv、nsenter、unshare、mount、umount）、CA 证书和 TLS 运行库。Debian 系构建通常需要 `build-essential pkg-config libssl-dev`，运行通常需要 `openvpn iproute2 nftables util-linux ca-certificates`；实际版本须在目标系统验收。
 
 本项目交付一个程序；控制、网络辅助和工作子进程调用同一文件的内部命令。外部工具仍须预装。启动需要管理员权限，控制进程随后降至用户 10001，工作进程使用用户 10002；两者清空能力。避免与系统已有这两个身份的其他服务共用专用环境。
@@ -22,9 +56,9 @@
 
 ```sh
 chmod 600 credentials.local.json
-sudo ./target/release/vpngate-auto-proxy run --config ./config.local.json
-sudo ./target/release/vpngate-auto-proxy status --runtime-dir /run/vap --json
-sudo ./target/release/vpngate-auto-proxy stop --runtime-dir /run/vap
+sudo vap run --config ./config.local.json
+sudo vap status --runtime-dir /run/vap --json
+sudo vap stop --runtime-dir /run/vap
 ```
 
 示例运行目录 `/run/vap` 与数据目录 `/var/lib/vap` 不同于配置省略字段时的默认路径；管理命令始终使用实际配置路径。配置相对路径以配置文件所在目录解析。
@@ -39,7 +73,7 @@ sudo ./target/release/vpngate-auto-proxy stop --runtime-dir /run/vap
 docker compose config --quiet
 docker compose build
 docker compose up -d
-docker compose exec proxy vpngate-auto-proxy status --runtime-dir /run/vap --json
+docker compose exec proxy vap status --runtime-dir /run/vap --json
 docker compose stop
 ```
 

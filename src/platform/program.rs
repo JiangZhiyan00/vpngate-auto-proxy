@@ -11,7 +11,7 @@ use std::{
 
 // 与依赖的管理员私有目录分开：业务子进程需要搜索目录并执行同一程序。
 const PARENT: &str = "/Library/Application Support/vpngate-auto-proxy-programs";
-const NAME: &str = "vpngate-auto-proxy";
+const NAME: &str = "vap";
 const LIMIT: u64 = 64 * 1024 * 1024;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -276,6 +276,14 @@ mod tests {
         }
         let bytes = serde_json::to_vec(&snapshot.record(Path::new(PARENT))).unwrap();
         assert!(decode(&bytes).is_ok());
+        let mut old: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        old["binary_path"] = serde_json::json!(
+            snapshot
+                .target(Path::new(PARENT))
+                .join("vpngate-auto-proxy")
+        );
+        assert!(decode(&serde_json::to_vec(&old).unwrap()).is_err());
+
         for field in [
             "format_version",
             "version",
@@ -306,6 +314,7 @@ mod tests {
             serde_json::from_slice(&fs::read(path.parent().unwrap().join("program.json")).unwrap())
                 .unwrap();
         assert_eq!(record.binary_path, path);
+        assert_eq!(path.file_name().unwrap(), "vap");
         assert_eq!(record.binary_sha256, snapshot.hash);
         assert_eq!(
             commit_with(directory.path(), &snapshot, dependency::write_file)

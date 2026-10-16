@@ -54,7 +54,7 @@ impl ServiceFixture {
         std::fs::write(&path, serde_json::to_vec(&config).unwrap()).unwrap();
         let stderr = std::fs::File::create(directory.path().join("events.log")).unwrap();
         let started = std::time::Instant::now();
-        let child = std::process::Command::new(env!("CARGO_BIN_EXE_vpngate-auto-proxy"))
+        let child = std::process::Command::new(env!("CARGO_BIN_EXE_vap"))
             .args(["run", "--config"])
             .arg(path)
             .stderr(stderr)

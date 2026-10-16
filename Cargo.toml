@@ -6,6 +6,12 @@ rust-version = "1.90"
 license = "MIT"
 description = "自动获取并隔离验证 VPNGate 节点的局域网代理"
 publish = false
+autobins = false
+default-run = "vap"
+
+[[bin]]
+name = "vap"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1"

@@ -104,7 +104,7 @@ def main():
     parser = argparse.ArgumentParser(description='构建独立的苹果依赖安装候选')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--openssl-prefix', type=Path, default=Path('/opt/homebrew/opt/openssl@3'))
-    parser.add_argument('--validator', type=Path, default=ROOT / 'target/debug/vpngate-auto-proxy')
+    parser.add_argument('--validator', type=Path, default=ROOT / 'target/debug/vap')
     args = parser.parse_args()
     try:
         report = build(args.output.absolute(), args.openssl_prefix.absolute(), args.validator.absolute())

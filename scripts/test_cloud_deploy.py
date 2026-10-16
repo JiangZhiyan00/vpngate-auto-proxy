@@ -106,6 +106,7 @@ class DeploymentTests(unittest.TestCase):
             self.assertEqual(cloud_deploy.manage(self.root, 'ready'), 3)
             command = execute.call_args.args[0]
             self.assertIn('--check-ready', command)
+            self.assertEqual(command[command.index('proxy') + 1], 'vap')
 
     def test_stop_preserves_volume_and_has_fifteen_second_timeout(self):
         self.bundle()
