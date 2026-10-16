@@ -6,10 +6,12 @@ import socketserver
 import subprocess
 import threading
 import unittest
+import sys
 
 PROBE = Path(__file__).resolve().parents[1] / "target/debug/examples/macos_guard_probe"
 
 
+@unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
 class GuardTests(unittest.TestCase):
     def execute(self, index):
         received = []

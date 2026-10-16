@@ -9,6 +9,7 @@ import tempfile
 import time
 from types import SimpleNamespace
 import unittest
+import sys
 from unittest.mock import Mock, patch
 
 from macos_parallel import Tunnel
@@ -108,6 +109,7 @@ class OwnerProcessTests(unittest.TestCase):
         for peer in peers:
             self.assertEqual(peer.recv(1), b'')
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生工作进程或实验依赖")
     def test_fixed_external_program_stops_when_owner_is_killed_during_hold(self):
         binary = REPO/'validation-output/macos-deps/openvpn-2.6.23-lease-local/sbin/openvpn'
         # 明确要求固定依赖存在；缺少工具不能计作通过。
@@ -132,6 +134,7 @@ class OwnerProcessTests(unittest.TestCase):
         self.assertIn('MANAGEMENT: Triggering management exit', log_path.read_text())
         self.assertIn('Signal received from management interface, exiting', log_path.read_text())
 
+    @unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生工作进程或实验依赖")
     def test_forced_owner_exit_retires_real_worker_and_registered_connections(self):
         import test_macos_generation_worker as worker_fixture
         case = worker_fixture.WorkerTests()

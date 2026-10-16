@@ -7,11 +7,13 @@ import socket
 import subprocess
 import threading
 import unittest
+import sys
 import uuid
 
 REPO = Path(__file__).resolve().parents[1]
 
 
+@unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的原生接口及探针")
 class WorkerTests(unittest.TestCase):
     def setUp(self):
         self.tcp = socket.socket()

@@ -1,5 +1,6 @@
 """防漏证据判定必须同时满足正对照、零丢包及无负向标记。"""
 import unittest
+import sys
 import struct
 import importlib.util
 import json
@@ -89,6 +90,7 @@ class CaptureTests(unittest.TestCase):
                 inspect_capture(content, stats, self.positive, self.negative)
 
 
+@unittest.skipUnless(sys.platform == "darwin", "需要苹果系统的实验私有目录")
 class DiagnosticTests(unittest.TestCase):
     setUp = CaptureTests.setUp
     capture = CaptureTests.capture
