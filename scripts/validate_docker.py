@@ -208,7 +208,17 @@ def main():
             assert not any(item["Destination"] == "/validation" for item in mounted)
             assert any(item["Destination"] == "/run/secrets/proxy_credentials" for item in mounted)
         else:
-            run(*args, "-v", f"{files}:/validation:ro", options.image,
+            if not capabilities:
+                # 私有临时目录属于宿主运行器且为 0700；缺少 DAC_OVERRIDE
+                # 的根用户无法遍历它。只挂载不含凭据的配置文件，让对照
+                # 实例完成配置读取后由生产预检拒绝缺少的能力。
+                if settings.get("credentials_file") is not None:
+                    raise RuntimeError("缺少能力的对照只允许无凭据配置")
+                (files / configuration).chmod(0o644)
+                mount = f"{files / configuration}:/validation/{configuration}:ro"
+            else:
+                mount = f"{files}:/validation:ro"
+            run(*args, "-v", mount, options.image,
                 "run", "--config", f"/validation/{configuration}")
 
     def stop(name):
