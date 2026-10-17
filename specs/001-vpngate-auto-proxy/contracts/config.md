@@ -21,7 +21,7 @@
 | `countries` | `[]`（全部） | 最多 256 项；每项两位 ASCII 英文字母，大小写不敏感匹配来源；无匹配不回退 |
 | `timezone` | `Asia/Shanghai` | 支持的 IANA 名称；非法名称拒绝；影响日志及人类状态显示，机器时间保持 UTC |
 | `source_url` | `https://www.vpngate.net/api/iphone/` | HTTP/HTTPS，禁止内嵌用户名密码 |
-| `allow_legacy_vpngate_crypto` | `false` | 仅 Linux；显式开启才接受 VPN Gate 的完整 `AES-128-CBC`、`SHA1` 旧算法组合，其他配置仍按严格白名单处理 |
+| `allow_legacy_vpngate_crypto` | Linux／Docker 为 `true`；苹果原生为 `false` | 仅 Linux 支持固定的完整 `AES-128-CBC`、`SHA1` 旧算法组合；省略或容器空值采用默认，显式 `false` 保持严格模式，其他配置仍按严格白名单处理 |
 | `source_refresh_seconds` | 1800 | 正整数 |
 | `source_timeout_seconds` | 15 | 正整数 |
 | `source_cache_ttl_seconds` | 86400 | 正整数 |
@@ -33,7 +33,7 @@
 | `tunnel_timeout_seconds` | 30 | 正整数 |
 | `exit_check_timeout_seconds` | 10 | 正整数；所有候选地址尝试及跳转总预算 |
 | `exit_check_max_attempts` | 3 | 正整数；每次独立随机，成功即停止 |
-| `health_interval_seconds` | 10 | 正整数；同一出口检查不重叠 |
+| `health_interval_seconds` | 60 | 正整数；必须大于 health_timeout_seconds，同一出口检查不重叠；环境变量为 VAP_HEALTH_INTERVAL_SECONDS |
 | `health_timeout_seconds` | 5 | 正整数，小于健康检查间隔 |
 | `candidate_retries` | 0 | 非负整数；节点握手/出口整体重试次数，与地址尝试不同 |
 | `retry_initial_seconds` | 30 | 正整数 |
@@ -119,3 +119,7 @@ T090 候选槽位接受 1 至 32，另保留一个活动槽位；接口配置串
 旧版严格字段客户端与新版状态服务混用不作兼容承诺；新版客户端对旧服务缺少 `timezone` 的处理见命令行契约。
 
 来源刷新后筛选视图为空，不主动断开此前按当前配置选出的健康活动出口，沿用需-001、需-006 的原规则；断开后不允许从范围外候选恢复。文中“无匹配时等待”指启动、重启或当前不存在健康活动出口的选择阶段。修改地区配置须重启，不提供热更新筛选或维持旧配置活动出口的承诺。
+
+## 部署日志增量（003）
+
+文件新增 `log_level`（error／warn／info／debug，默认 info）与 `log_summary_interval_seconds`（1—86400 整数，默认 60），对应容器变量 VAP_LOG_LEVEL、VAP_LOG_SUMMARY_INTERVAL_SECONDS。空环境采用默认，非法值在创建运行资源前拒绝；原生文件不接受环境覆盖。周期摘要只在 debug 输出，过滤不改变调度、状态、认证或故障阻断。具体规则见[日志契约](../../003-deploy-logging/contracts/logging.md)。

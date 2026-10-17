@@ -21,6 +21,7 @@ fn container_defaults_keep_fixed_paths_and_no_secret_content() {
         Some("/run/secrets/proxy_credentials")
     );
     assert!(config.countries.is_empty());
+    assert!(config.allow_legacy_vpngate_crypto);
     assert_eq!(config.timezone.name(), "Asia/Shanghai");
 }
 
@@ -44,12 +45,14 @@ fn environment_values_are_typed_and_use_existing_validation() {
     assert_eq!(config.max_connections, 25);
     assert_eq!(config.candidate_concurrency, 1);
     assert_eq!(config.exit_check_urls.len(), 2);
+    assert!(!config.allow_legacy_vpngate_crypto);
 }
 
 #[test]
 fn empty_values_keep_defaults_and_unrelated_variables_cannot_override_paths() {
     let config = convert(&[
         ("VAP_COUNTRIES", ""),
+        ("VAP_ALLOW_LEGACY_VPNGATE_CRYPTO", ""),
         ("VAP_TIMEZONE", ""),
         ("VAP_MAX_CONNECTIONS", ""),
         ("VAP_LISTEN", "127.0.0.1:7"),
@@ -59,6 +62,7 @@ fn empty_values_keep_defaults_and_unrelated_variables_cannot_override_paths() {
     ])
     .unwrap();
     assert_eq!(config.max_connections, 50);
+    assert!(config.allow_legacy_vpngate_crypto);
     assert_eq!(config.listen.to_string(), "0.0.0.0:1080");
     let value = serde_json::to_string(&config).unwrap();
     assert!(!value.contains("do-not-copy"));
@@ -106,4 +110,65 @@ fn real_config_command_validates_without_starting_a_service() {
         .unwrap();
     assert_eq!(result.status.code(), Some(2));
     assert!(result.stdout.is_empty());
+}
+
+#[test]
+fn log_environment_is_equivalent_and_empty_uses_defaults() {
+    for level in ["error", "warn", "info", "debug"] {
+        let config = convert(&[
+            ("VAP_LOG_LEVEL", level),
+            ("VAP_LOG_SUMMARY_INTERVAL_SECONDS", "300"),
+        ])
+        .unwrap();
+        let file: AppConfig = serde_json::from_value(
+            serde_json::json!({"log_level":level,"log_summary_interval_seconds":300}),
+        )
+        .unwrap();
+        assert_eq!(config.log_level, file.log_level);
+        assert_eq!(
+            config.log_summary_interval_seconds,
+            file.log_summary_interval_seconds
+        );
+    }
+    let config = convert(&[
+        ("VAP_LOG_LEVEL", ""),
+        ("VAP_LOG_SUMMARY_INTERVAL_SECONDS", ""),
+    ])
+    .unwrap();
+    assert_eq!(config.log_summary_interval_seconds, 60);
+    for (key, bad) in [
+        ("VAP_LOG_LEVEL", "INFO"),
+        ("VAP_LOG_LEVEL", "debug "),
+        ("VAP_LOG_LEVEL", "secret-marker"),
+        ("VAP_LOG_SUMMARY_INTERVAL_SECONDS", "0"),
+        ("VAP_LOG_SUMMARY_INTERVAL_SECONDS", "86401"),
+        ("VAP_LOG_SUMMARY_INTERVAL_SECONDS", "1.1"),
+        ("VAP_LOG_SUMMARY_INTERVAL_SECONDS", "-1"),
+    ] {
+        let error = convert(&[(key, bad)]).err().unwrap();
+        assert!(!format!("{error:#}").contains("secret-marker"));
+    }
+}
+
+#[test]
+fn health_interval_defaults_and_overrides_keep_timeout_constraints() {
+    for values in [vec![], vec![("VAP_HEALTH_INTERVAL_SECONDS", "")]] {
+        let config = convert(&values).unwrap();
+        assert_eq!(config.health_interval_seconds, 60);
+        assert_eq!(config.health_timeout_seconds, 5);
+    }
+    let env = convert(&[
+        ("VAP_HEALTH_INTERVAL_SECONDS", "120"),
+        ("VAP_HEALTH_TIMEOUT_SECONDS", "8"),
+    ])
+    .unwrap();
+    let file: AppConfig =
+        serde_json::from_str(r#"{"health_interval_seconds":120,"health_timeout_seconds":8}"#)
+            .unwrap();
+    file.validate().unwrap();
+    assert_eq!(env.health_interval_seconds, file.health_interval_seconds);
+    assert_eq!(env.health_timeout_seconds, file.health_timeout_seconds);
+    for bad in ["0", "-1", "1.5", "5"] {
+        assert!(convert(&[("VAP_HEALTH_INTERVAL_SECONDS", bad)]).is_err());
+    }
 }

@@ -7,6 +7,75 @@ pub fn require_linux() {
     );
 }
 
+/// 独立持续排空器：不持有业务控制句柄，单行与保留事件均有上限。
+/// 时间由接收方单调时钟记录，测试不能用子进程的墙上时钟推算监听时机。
+#[allow(dead_code)]
+pub struct JsonLogCapture {
+    pub events: std::sync::Arc<
+        std::sync::Mutex<std::collections::VecDeque<(std::time::Instant, serde_json::Value)>>,
+    >,
+    task: tokio::task::JoinHandle<()>,
+    stop: tokio_util::sync::CancellationToken,
+}
+#[allow(dead_code)]
+impl JsonLogCapture {
+    pub fn spawn(reader: impl tokio::io::AsyncRead + Unpin + Send + 'static) -> Self {
+        use tokio::io::AsyncReadExt;
+        let events = std::sync::Arc::new(std::sync::Mutex::new(std::collections::VecDeque::new()));
+        let collected = events.clone();
+        let stop = tokio_util::sync::CancellationToken::new();
+        let cancelled = stop.clone();
+        let task = tokio::spawn(async move {
+            let mut reader = reader;
+            let mut buffer = [0; 4096];
+            let mut line = Vec::new();
+            let mut oversized = false;
+            loop {
+                let size = tokio::select! {
+                    () = cancelled.cancelled() => break,
+                    result = reader.read(&mut buffer) => match result {
+                        Ok(0) | Err(_) => break,
+                        Ok(size) => size,
+                    }
+                };
+                for byte in &buffer[..size] {
+                    if *byte == b'\n' {
+                        if !oversized && let Ok(event) = serde_json::from_slice(&line) {
+                            let mut output = collected.lock().unwrap();
+                            if output.len() == 1024 {
+                                output.pop_front();
+                            }
+                            output.push_back((std::time::Instant::now(), event));
+                        }
+                        line.clear();
+                        oversized = false;
+                    } else if line.len() < 65536 && !oversized {
+                        line.push(*byte);
+                    } else {
+                        oversized = true;
+                        line.clear();
+                    }
+                }
+            }
+        });
+        Self { events, task, stop }
+    }
+
+    pub async fn close(self) {
+        self.stop.cancel();
+        // 取消只影响读者；ServiceFixture 仍按原十五秒预算停止并回收子进程。
+        while !self.task.is_finished() {
+            tokio::task::yield_now().await;
+        }
+    }
+}
+impl Drop for JsonLogCapture {
+    fn drop(&mut self) {
+        self.stop.cancel();
+        self.task.abort();
+    }
+}
+
 pub struct ServiceFixture {
     pub child: std::process::Child,
     pub config: vpngate_auto_proxy::config::AppConfig,
@@ -17,6 +86,21 @@ pub struct ServiceFixture {
 impl ServiceFixture {
     pub fn start(auth: bool, max_connections: usize) -> Self {
         Self::start_with(auth, max_connections, |_| {})
+    }
+    #[allow(dead_code)]
+    pub fn start_debug(auth: bool, max_connections: usize) -> Self {
+        Self::start_debug_with(auth, max_connections, |_| {})
+    }
+    #[allow(dead_code)]
+    pub fn start_debug_with(
+        auth: bool,
+        max_connections: usize,
+        change: impl FnOnce(&mut vpngate_auto_proxy::config::AppConfig),
+    ) -> Self {
+        Self::start_with(auth, max_connections, |config| {
+            config.log_level = vpngate_auto_proxy::logging::LogLevel::Debug;
+            change(config);
+        })
     }
     pub fn start_with(
         auth: bool,
@@ -180,4 +264,31 @@ impl Drop for FixtureStateGuard {
             let _ = std::fs::remove_file(&self.path);
         }
     }
+}
+
+#[tokio::test]
+async fn bounded_capture_drains_oversized_lines_and_keeps_following_json() {
+    use tokio::io::AsyncWriteExt;
+    let (mut writer, reader) = tokio::io::duplex(4096);
+    let capture = JsonLogCapture::spawn(reader);
+    let task = tokio::spawn(async move {
+        writer.write_all(&vec![b'x'; 70000]).await.unwrap();
+        writer
+            .write_all(b"\n{\"event_type\":\"safe\"}\n")
+            .await
+            .unwrap();
+    });
+    tokio::time::timeout(std::time::Duration::from_secs(2), task)
+        .await
+        .unwrap()
+        .unwrap();
+    for _ in 0..100 {
+        if !capture.events.lock().unwrap().is_empty() {
+            break;
+        }
+        tokio::task::yield_now().await;
+    }
+    assert_eq!(capture.events.lock().unwrap().len(), 1);
+    assert_eq!(capture.events.lock().unwrap()[0].1["event_type"], "safe");
+    capture.close().await;
 }

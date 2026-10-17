@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+from package_host_init import package as package_host_init
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,9 +28,22 @@ def validate_release(tag, image):
 
 def build_inputs():
     files = [ROOT / name for name in ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml',
-                                      'Dockerfile', 'deploy/entrypoint.sh', 'deploy/Dockerfile.release')]
+                                      'Dockerfile', 'deploy/entrypoint.sh', 'deploy/Dockerfile.release',
+                                      'scripts/host-init.py', 'scripts/package_host_init.py',
+                                      'deploy/apparmor/vpngate-auto-proxy')]
     files += sorted((ROOT / 'src').rglob('*.rs'))
-    return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
+    files += sorted((ROOT / 'scripts').rglob('*.py'))
+    files.append(ROOT / '.github/workflows/docker-publish.yml')
+    return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(set(files))}
+
+
+def require_clean_source():
+    if subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=normal'], cwd=ROOT, text=True).strip():
+        raise RuntimeError('公开发布准备必须使用已提交的干净源码，不能将未提交代码绑定到旧提交')
+    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    if not re.fullmatch(r'[0-9a-f]{40}', commit):
+        raise RuntimeError('无法确认完整来源提交')
+    return commit
 
 
 def run(*args):
@@ -45,7 +59,9 @@ def main():
     parser.add_argument('--sources', type=Path, help='复用已校验的来源缓存；仍执行全部核验')
     options = parser.parse_args()
     image = validate_release(options.tag, options.image)
+    source_commit = require_clean_source()
     frozen_inputs = build_inputs()
+    policy_sha256 = frozen_inputs['deploy/apparmor/vpngate-auto-proxy']
     output = ROOT / 'validation-output' / ('publish-' + options.tag)
     output.mkdir(parents=True, exist_ok=False)
     sources = options.sources.resolve() if options.sources else output / 'sources'
@@ -60,7 +76,9 @@ def main():
     run('python3', 'scripts/collect_patch_source.py', '--output', str(sources / 'extras'))
     run('python3', 'scripts/collect_runtime_notices.py', '--sources', str(sources / 'alpine'), '--image', base)
     run('docker', 'build', '--platform', 'linux/amd64', '-f', 'deploy/Dockerfile.release',
-        '--build-arg', 'RUNTIME_IMAGE=' + base, '--build-arg', 'RELEASE_VERSION=' + options.tag, '-t', image, '.')
+        '--build-arg', 'RUNTIME_IMAGE=' + base, '--build-arg', 'RELEASE_VERSION=' + options.tag,
+        '--build-arg', 'APPARMOR_SHA256=' + policy_sha256,
+        '--build-arg', 'SOURCE_COMMIT=' + source_commit, '-t', image, '.')
     run('python3', 'scripts/collect-license-inventory.py', '--image', image)
     run('python3', 'scripts/collect_alpine_sources.py', '--output', str(sources / 'alpine'))
     run('python3', 'scripts/finalize_distribution_review.py', '--image', image, '--sources', str(sources))
@@ -72,20 +90,25 @@ def main():
     else:
         run('docker', 'build', '--platform', 'linux/amd64', '-f', 'tests/fixtures/Dockerfile', '-t', fixture, '.')
     command = ['python3', 'scripts/validate_docker.py', '--image', image, '--fixture-image', fixture,
-               '--skip-build', '--environment-config']
+               '--skip-build', '--environment-config', '--case', 'logging']
     if options.require_apparmor:
         command.append('--require-apparmor')
     run(*command)
     identity = json.loads(subprocess.check_output(['docker', 'image', 'inspect', image], text=True))[0]
+    if identity['Config'].get('Labels', {}).get('io.vpngate-auto-proxy.apparmor-sha256') != policy_sha256:
+        raise RuntimeError('最终镜像策略摘要与受测源码不一致')
     binary = program_bytes(image)
     report = output / 'validation.json'
     report.write_text(json.dumps({'status': 'passed', 'image_id': identity['Id'],
                                  'binary_sha256': hashlib.sha256(binary).hexdigest(),
-                                 'scope': 'Docker amd64 受控短试及分发材料核验；未重跑三十分钟容量试验'}, ensure_ascii=False, indent=2) + '\n')
+                                 'cases': ['smoke', 'logging'], 'apparmor_required': options.require_apparmor,
+                                 'scope': 'Docker amd64 受控短试、十分钟日志及分发材料核验；未重跑三十分钟容量试验'}, ensure_ascii=False, indent=2) + '\n')
     if build_inputs() != frozen_inputs:
         raise RuntimeError('构建期间源码发生变化，拒绝冻结与镜像不一致的源码')
+    host_output = output / 'host-setup'
+    package_host_init(options.tag, source_commit, identity['Id'], host_output)
     run('python3', 'scripts/package-docker-release.py', '--image', image, '--sources', str(sources),
-        '--validation', str(report), '--output', str(output / 'bundle'))
+        '--validation', str(report), '--host-setup', str(host_output), '--output', str(output / 'bundle'))
     archive = output / ('vpngate-source-' + options.tag + '.tar.gz')
     shutil.copyfile(output / 'bundle/source-materials.tar.gz', archive)
     with archive.open('rb') as stream:
@@ -93,7 +116,12 @@ def main():
         for block in iter(lambda: stream.read(1024 * 1024), b''):
             value.update(block)
         digest = value.hexdigest()
-    (output / 'SHA256SUMS').write_text(digest + '  ' + archive.name + '\n')
+    for material in sorted(host_output.iterdir()):
+        shutil.copyfile(material, output / material.name)
+    checksum_lines = [digest + '  ' + archive.name + '\n']
+    for material in [report, *sorted(host_output.iterdir())]:
+        checksum_lines.append(hashlib.sha256(material.read_bytes()).hexdigest() + '  ' + material.name + '\n')
+    (output / 'SHA256SUMS').write_text(''.join(checksum_lines))
     print('镜像及对应源码已准备：' + image)
 
 

@@ -15,4 +15,8 @@ if [ "$#" = 0 ]; then
         *) echo "容器配置模式必须为 file 或 environment" >&2; exit 2 ;;
     esac
 fi
+if [ "${1:-}" = run ]; then
+    shift
+    set -- run --container-internal "$@"
+fi
 exec /usr/local/bin/vap "$@"

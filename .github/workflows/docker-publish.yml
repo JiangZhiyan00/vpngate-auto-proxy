@@ -60,7 +60,13 @@ jobs:
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --notes 'Linux x86_64 Docker 版本；完整来源材料及校验摘要见附件。'
           fi
-          gh release upload "$RELEASE_TAG" "validation-output/publish-$RELEASE_TAG/vpngate-source-$RELEASE_TAG.tar.gz" "validation-output/publish-$RELEASE_TAG/SHA256SUMS" "validation-output/publish-$RELEASE_TAG/validation.json"
+          gh release upload "$RELEASE_TAG" \
+            "validation-output/publish-$RELEASE_TAG/vpngate-source-$RELEASE_TAG.tar.gz" \
+            "validation-output/publish-$RELEASE_TAG/SHA256SUMS" \
+            "validation-output/publish-$RELEASE_TAG/validation.json" \
+            "validation-output/publish-$RELEASE_TAG/vap-host-init-$RELEASE_TAG.py" \
+            "validation-output/publish-$RELEASE_TAG/host-setup.json" \
+            "validation-output/publish-$RELEASE_TAG/host-setup-command.txt"
       - name: 登录镜像仓库
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:

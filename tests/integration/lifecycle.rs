@@ -27,7 +27,7 @@ async fn exited(service: &mut ServiceFixture) -> std::process::ExitStatus {
 #[ignore = "需要受控 Linux 状态、认证、控制帧及停止验收"]
 async fn status_is_sanitized_invalid_frames_are_rejected_and_stop_waits_for_cleanup() {
     let _state = FixtureStateGuard::set(json!({"source_count":5}));
-    let mut service = ServiceFixture::start(true, 50);
+    let mut service = ServiceFixture::start_debug(true, 50);
     wait_event(&service, "active_promoted", 1).await;
     tokio::time::sleep(Duration::from_millis(150)).await;
     let output = command(&service, &["status", "--json", "--check-ready"]);
@@ -102,7 +102,7 @@ async fn status_is_sanitized_invalid_frames_are_rejected_and_stop_waits_for_clea
 #[ignore = "需要受控 Linux 等待状态与信号清理"]
 async fn waiting_status_is_successful_but_readiness_is_three_and_sigterm_cleans() {
     let _state = FixtureStateGuard::set(json!({"source_count":0}));
-    let mut service = ServiceFixture::start(false, 50);
+    let mut service = ServiceFixture::start_debug(false, 50);
     wait_event(&service, "source_updated", 1).await;
     tokio::time::sleep(Duration::from_millis(150)).await;
     assert_eq!(
@@ -141,7 +141,7 @@ async fn waiting_status_is_successful_but_readiness_is_three_and_sigterm_cleans(
 async fn occupied_port_fails_without_leaving_owned_runtime_files() {
     let _state = FixtureStateGuard::set(json!({}));
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.listen = match listener.local_addr().unwrap() {
             std::net::SocketAddr::V4(address) => address,
             _ => unreachable!(),
@@ -158,7 +158,7 @@ async fn occupied_port_fails_without_leaving_owned_runtime_files() {
 #[ignore = "需要受控 Linux 异常终止后的归属恢复"]
 async fn killed_parent_restarts_only_after_reclaiming_recorded_orphans() {
     let _state = FixtureStateGuard::set(json!({}));
-    let mut first = ServiceFixture::start(false, 50);
+    let mut first = ServiceFixture::start_debug(false, 50);
     wait_event(&first, "round_finished", 1).await;
     let old: Value = serde_json::from_slice(
         &std::fs::read(first.config.runtime_dir.join("resources.json")).unwrap(),
@@ -176,7 +176,7 @@ async fn killed_parent_restarts_only_after_reclaiming_recorded_orphans() {
     .await
     .unwrap();
     assert!(!exited(&mut first).await.success());
-    let mut second = ServiceFixture::start_with(false, 50, |c| {
+    let mut second = ServiceFixture::start_debug_with(false, 50, |c| {
         c.runtime_dir = first.config.runtime_dir.clone();
         c.data_dir = first.config.data_dir.clone();
         c.listen = first.config.listen;
@@ -222,7 +222,7 @@ async fn partial_initialization_rolls_back_owned_private_directory_and_preserves
             .count()
     };
     let before = owned();
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         std::fs::create_dir_all(c.runtime_dir.join("workers")).unwrap();
         std::fs::write(c.runtime_dir.join("workers/unknown"), "不明归属资料").unwrap();
     });
@@ -238,7 +238,7 @@ async fn partial_initialization_rolls_back_owned_private_directory_and_preserves
 #[ignore = "需要受控 Linux 进程身份复用与未登记进程拒绝"]
 async fn unrecorded_process_and_changed_start_identity_prevent_stale_cleanup() {
     let _state = FixtureStateGuard::set(json!({"source_protocols":["tcp"]}));
-    let mut service = ServiceFixture::start(false, 50);
+    let mut service = ServiceFixture::start_debug(false, 50);
     wait_event(&service, "round_finished", 1).await;
     let mut manifest: vpngate_auto_proxy::netd::ResourceManifest = serde_json::from_slice(
         &std::fs::read(service.config.runtime_dir.join("resources.json")).unwrap(),
@@ -379,7 +379,7 @@ async fn missing_tool_is_reported_before_waiting_and_leaves_no_runtime() {
 #[ignore = "需要受控 Linux 在多个检测任务运行期间停止"]
 async fn stop_cancels_concurrent_candidates_and_reaps_every_recorded_process() {
     let _state = FixtureStateGuard::set(json!({"delay":20}));
-    let mut service = ServiceFixture::start_with(false, 50, |config| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |config| {
         config.exit_check_urls = vec!["http://11.54.0.2/slow".parse().unwrap()];
         config.exit_check_timeout_seconds = 30;
     });

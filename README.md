@@ -36,7 +36,7 @@ sudo vap stop --runtime-dir /run/vap
 
 首次将 `.env.example` 复制为 `.env`，在其中配置镜像版本、国家筛选、时区和检测参数；初始化凭据并加载宿主所需策略后，日常启动仅需 `docker compose up -d`，停止用 `docker compose stop`。无需维护用户 JSON 或每次设置环境变量；修改 `.env` 后再次执行 `docker compose up -d` 生效。原生及既有文件部署仍支持 JSON。
 
-x86_64 第三版离线包已整合云端验证期间的修复。实际部署发现当前公开来源的配置均使用旧算法，程序原有严格白名单会使候选数为零；第三版提供默认关闭、仅 Linux 可用的显式兼容开关。是否启用及旧版升级步骤见[离线包说明](deploy/cloud/README.md)。解压后先加载镜像及主机所需的专用策略，再使用以下入口：
+x86_64 第三版离线包已整合云端验证期间的修复。实际部署发现当前公开来源的配置均使用旧算法，程序原有严格白名单会使候选数为零；该历史第三版提供默认关闭、仅 Linux 可用的显式兼容开关。当前源码已将 Linux／Docker 省略配置时的默认值调整为 true，显式 false 仍启用严格模式；此变更尚未发布，不改变旧包。是否启用及旧版升级步骤见[离线包说明](deploy/cloud/README.md)。解压后先加载镜像及主机所需的专用策略，再使用以下入口：
 
 ```sh
 bash manage.sh init
@@ -92,3 +92,12 @@ scripts/validate-soak.sh --deployment docker --clients 5 --connections 50 --dura
 `timezone` 使用地区时区名称，例如 `Asia/Tokyo`、`Asia/Singapore`、`America/New_York`、`Australia/Sydney`；默认 `Asia/Shanghai`，自动应用夏令时。运行日志采用配置时区，状态接口时间、缓存和检测记录仍使用统一世界时，状态命令的人类可读时间遵循实例时区，调度与有效期不受显示时区影响。无需修改服务器时区或安装时区数据包；容器的 `TZ` 环境变量不覆盖此配置。修改后重启实例生效，旧配置可以继续使用。
 
 版本标签自动构建与 Docker Hub 发布的配置步骤见[发布说明](docs/dockerhub-release.md)。
+
+## 宿主准备与日志配置增量
+
+包含本功能的新版本发布会提供 `host-setup-command.txt`：首次在宿主执行其中一条固定版本、先校验后运行的命令，准备项目唯一 AppArmor 策略，随后可在 Portainer 直接启动镜像。安装器不要求完整源码、不安装系统依赖、不重启其他容器；仅针对已验证的宿主矩阵声明支持。旧版本没有这些附件，具体边界见[一次宿主准备](docs/deployment.md#一次宿主策略准备)。
+
+新镜像新增 `VAP_LOG_LEVEL`（默认 info，只允许 error／warn／info／debug）及 `VAP_LOG_SUMMARY_INTERVAL_SECONDS`（默认 60，范围 1—86400）。周期摘要只在 debug 输出，不改变健康检查频率。实际监听成功后默认显示一次安全配置摘要；容器内部端口与宿主映射、出口就绪分别判断。修改环境后重新创建代理容器；文件配置使用对应的小写字段。详见[日志和摘要说明](docs/deployment.md#日志等级与启动摘要)。
+
+
+活动出口检查间隔可通过 VAP_HEALTH_INTERVAL_SECONDS 配置，新版默认 60 秒；检测总超时默认 5 秒，间隔必须大于超时。已发布镜像可显式设置该变量使用 60 秒，无须等待新默认值发布。详见[部署说明](docs/deployment.md#活动出口检查频率)。

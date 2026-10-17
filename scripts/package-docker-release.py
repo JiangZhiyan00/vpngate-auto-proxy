@@ -12,6 +12,7 @@ import tarfile
 
 from cloud_image_identity import archive_identities
 from release_materials import verify_sources
+from package_host_init import validate_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 DEPLOY_FILES = [
@@ -24,7 +25,13 @@ SOURCE_FILES = ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'Dockerfile',
                 'config.example.json', 'compose.yaml', 'docs/deployment.md', 'docs/reuse-map.md',
                 '.github/workflows/docker-publish.yml', 'docs/dockerhub-release.md',
                 'specs/002-rename-cli-vap/contracts/cli.md',
-                'specs/002-rename-cli-vap/contracts/deployment.md']
+                'specs/002-rename-cli-vap/contracts/deployment.md',
+                'specs/003-deploy-logging/spec.md', 'specs/003-deploy-logging/plan.md',
+                'specs/003-deploy-logging/data-model.md', 'specs/003-deploy-logging/quickstart.md',
+                'specs/003-deploy-logging/research.md', 'specs/003-deploy-logging/tasks.md',
+                'specs/003-deploy-logging/contracts/host-setup.md',
+                'specs/003-deploy-logging/contracts/logging.md',
+                'specs/003-deploy-logging/contracts/startup-summary.md']
 SOURCE_DIRECTORIES = ['src', 'scripts', 'tests', 'examples', 'deploy', 'docs/third-party']
 
 
@@ -40,12 +47,34 @@ def project_files():
     files = [ROOT / name for name in SOURCE_FILES]
     for name in SOURCE_DIRECTORIES:
         files.extend(path for path in (ROOT / name).rglob('*') if path.is_file()
-                     and '__pycache__' not in path.parts and path.suffix != '.pyc'
-                     and path.suffix not in ('.log', '.tmp') and not path.name.startswith('.env')
-                     and path.name not in ('credentials.local.json', 'config.local.json'))
+                     and '__pycache__' not in path.parts and path.suffix not in ('.pyc', '.pyo')
+                     and path.suffix not in ('.log', '.tmp', '.swp', '.swo') and '.log.' not in path.name
+                     and not path.name.startswith('.env')
+                     and not path.name.endswith(('.local.json', '.local.yaml', '.local.yml', '.rs.bk'))
+                     and path.name != '.DS_Store')
     if any(path.is_symlink() for path in files):
         raise ValueError('项目来源白名单包含符号链接')
     return sorted(set(files))
+
+
+def host_materials(directory, image):
+    directory = Path(directory)
+    manifest_path = directory / 'host-setup.json'
+    if directory.is_symlink() or manifest_path.is_symlink():
+        raise ValueError('宿主材料不得为链接')
+    manifest = validate_manifest(json.loads(manifest_path.read_text()))
+    names = {manifest['installer_filename'], 'host-setup.json', 'host-setup-command.txt'}
+    files = sorted(directory.iterdir())
+    if {p.name for p in files} != names or any(not p.is_file() or p.is_symlink() for p in files):
+        raise ValueError('宿主附件集合不符合契约')
+    labels = image['Config'].get('Labels', {})
+    if (manifest['image_id'] != image['Id']
+            or manifest['policy_sha256'] != labels.get('io.vpngate-auto-proxy.apparmor-sha256')
+            or manifest['release_tag'] != labels.get('org.opencontainers.image.version')
+            or manifest['source_commit'] != labels.get('org.opencontainers.image.revision')
+            or digest(directory / manifest['installer_filename']) != manifest['installer_sha256']):
+        raise ValueError('宿主材料与实际最终镜像不一致')
+    return files
 
 
 def main():
@@ -54,6 +83,7 @@ def main():
     parser.add_argument('--sources', type=Path, required=True)
     parser.add_argument('--validation', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--host-setup', type=Path, help='与本次最终镜像绑定的版本宿主附件')
     options = parser.parse_args()
     inventory, sources = verify_sources(ROOT, options.sources)
     image = json.loads(subprocess.check_output(['docker', 'image', 'inspect', options.image], text=True))[0]
@@ -74,7 +104,10 @@ def main():
     if not re.fullmatch('[A-Za-z0-9_.-]+', destination.name) or destination.exists() or archive.exists():
         raise ValueError('输出名无效或目标已存在')
     files = project_files()
+    materials = host_materials(options.host_setup, image) if options.host_setup else []
     destination.mkdir(parents=True)
+    for material in materials:
+        shutil.copyfile(material, destination / material.name)
     for relative in DEPLOY_FILES:
         output = destination / relative
         output.parent.mkdir(parents=True, exist_ok=True)

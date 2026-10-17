@@ -22,6 +22,8 @@ enum Command {
     Run {
         #[arg(long)]
         config: PathBuf,
+        #[arg(long, hide = true)]
+        container_internal: bool,
     },
     /// 查询本地实例状态
     Status {
@@ -149,7 +151,7 @@ fn public_help(target: Option<&str>) -> Option<&'static str> {
             "自动节点代理\n\n用法：vap <操作> [参数]\n\n操作：\n  run       前台启动代理\n  status    查询本地实例状态\n  stop      正常停止所属实例并等待资源回收\n  help      显示总览或指定操作的帮助\n\n选项：\n  -h, --help       显示帮助\n  -V, --version    显示实际程序版本\n\n示例：\n  vap run --config ./config.local.json\n  vap status --runtime-dir /run/vap --json --check-ready\n  vap stop --runtime-dir /run/vap\n  vap help status\n",
         ),
         Some("run") => Some(
-            "前台启动代理\n\n用法：vap run --config <路径>\n\n参数：\n  --config <路径>    必填，经过校验的代理 JSON 配置文件路径\n  -h, --help        显示帮助，不读取配置或启动实例\n\n示例：\n  vap run --config ./config.local.json\n",
+            "前台启动代理\n\n用法：vap run --config <路径>\n\n参数：\n  --config <路径>    必填，经过校验的代理 JSON 配置文件路径\n  -h, --help        显示帮助，不读取配置或启动实例\n\n日志配置：log_level 为 error、warn、info、debug，默认 info；log_summary_interval_seconds 默认 60，范围 1—86400 秒，仅 debug 显示周期摘要。不支持热更新，修改后重启实例；容器环境变更须重新创建。日志轮转由部署平台管理。\n\n示例：\n  vap run --config ./config.local.json\n",
         ),
         Some("status") => Some(
             "查询本地实例状态\n\n用法：vap status --runtime-dir <路径> [--json] [--check-ready]\n\n参数：\n  --runtime-dir <路径>    必填，与实例配置一致的私有运行目录\n  --json                 输出一个机器可读的状态 JSON\n  --check-ready          查询已有出口就绪状态；就绪返回 0，存活但未就绪返回 3\n  -h, --help             显示帮助，不连接控制通道\n\n说明：普通状态查询不以未就绪判定实例死亡；查询不会额外发起出口检测。\n\n示例：\n  vap status --runtime-dir /run/vap --json --check-ready\n",
@@ -244,7 +246,7 @@ fn main() -> std::process::ExitCode {
                 std::process::ExitCode::SUCCESS
             }
             Err(error) => {
-                eprintln!("容器配置无效：{error:#}");
+                eprintln!("容器配置无效：{error}");
                 std::process::ExitCode::from(2)
             }
         };
@@ -566,7 +568,7 @@ async fn application(arguments: Arguments) -> std::process::ExitCode {
         return match outcome {
             Ok(()) => std::process::ExitCode::SUCCESS,
             Err(error) => {
-                eprintln!("苹果工作进程失败：{error:#}");
+                eprintln!("苹果工作进程失败：{error}");
                 std::process::ExitCode::FAILURE
             }
         };
@@ -575,21 +577,28 @@ async fn application(arguments: Arguments) -> std::process::ExitCode {
         return match vpngate_auto_proxy::netd::system::configure_namespace().await {
             Ok(()) => std::process::ExitCode::SUCCESS,
             Err(error) => {
-                eprintln!("命名空间配置失败：{error:#}");
+                eprintln!("命名空间配置失败：{error}");
                 std::process::ExitCode::FAILURE
             }
         };
     }
-    if let Command::Run { config } = arguments.command {
+    if let Command::Run {
+        config,
+        container_internal,
+    } = arguments.command
+    {
         #[cfg(target_os = "macos")]
         {
-            let config = match vpngate_auto_proxy::config::AppConfig::load_config(&config) {
+            let mut config = match vpngate_auto_proxy::config::AppConfig::load_config(&config) {
                 Ok(config) => config,
                 Err(error) => {
                     eprintln!("配置无效：{error}");
                     return std::process::ExitCode::from(2);
                 }
             };
+            if container_internal {
+                config.listen_scope = vpngate_auto_proxy::logging::ListenScope::ContainerInternal;
+            }
             let Some(macos) = config.macos.clone() else {
                 eprintln!("配置无效：苹果原生运行必须提供 macos 部署配置");
                 return std::process::ExitCode::from(2);
@@ -626,13 +635,17 @@ async fn application(arguments: Arguments) -> std::process::ExitCode {
         }
         #[cfg(not(target_os = "macos"))]
         {
-            let (config, credentials) = match vpngate_auto_proxy::config::AppConfig::load(&config) {
-                Ok(value) => value,
-                Err(error) => {
-                    eprintln!("配置无效：{error}");
-                    return std::process::ExitCode::from(2);
-                }
-            };
+            let (mut config, credentials) =
+                match vpngate_auto_proxy::config::AppConfig::load(&config) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        eprintln!("配置无效：{error}");
+                        return std::process::ExitCode::from(2);
+                    }
+                };
+            if container_internal {
+                config.listen_scope = vpngate_auto_proxy::logging::ListenScope::ContainerInternal;
+            }
             return match vpngate_auto_proxy::service::run(config, credentials).await {
                 Ok(()) => std::process::ExitCode::SUCCESS,
                 Err(error) => {

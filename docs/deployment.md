@@ -65,6 +65,26 @@ sudo vap stop --runtime-dir /run/vap
 
 ## 容器部署
 
+### 一次宿主策略准备
+
+包含宿主准备附件的新版本提供独立安装器，不需要为了准备策略克隆源码仓库。旧版本附件没有此入口，不能把未发布功能当作 `latest` 已有能力。
+
+在所选版本的官方 GitHub 发布中查看 `host-setup-command.txt`，复制其中完整的一条命令到宿主终端。它在管理员私有目录下载固定版本的 `vap-host-init-vX.Y.Z.py`，先核对预期摘要，再执行；校验失败不会执行下载内容。信任起点是官方发布说明，摘要不是独立签名。安装器只准备 `/etc/apparmor.d/vpngate-auto-proxy`，不安装代理、不启动容器、不修改或重启其他服务。
+
+目标矩阵为 Debian 12／Ubuntu 24.04 x86_64、真实 systemd 宿主、本机有根 Docker、已启用 AppArmor 及 `/dev/net/tun`，需要 Python 3.10 以上及标准系统工具。缺少依赖或启动链不完整时明确拒绝，由管理员补齐；不通过关闭防护或使用全特权容器回退。两种发行版的真实加载与重启验收独立记录，当前本地文件测试不能替代它们。
+
+准备通过后，在 Portainer 仅部署或更新代理服务，保留已有秘密、设备、只读目录、能力和 `apparmor=vpngate-auto-proxy` 配置。日常同版本启动无需重新加载策略；服务开始监听与出口就绪不同，仍须运行 `vap status --runtime-dir /run/vap --json --check-ready`。
+
+保留已校验安装器用于重复核对，以下路径须替换为该文件的绝对路径：
+
+```sh
+sudo python3 /受保护目录/vap-host-init-vX.Y.Z.py --check
+```
+
+`--check` 完全只读，不创建锁、登记或加载策略。重复默认初始化在版本、摘要和 enforce 一致时跳过加载。无登记但已有完全相同官方策略时默认拒绝；停止仅使用此策略的代理后，管理员可明确执行 `--adopt`。未知字节和本地修改不能接管。升级时使用已校验的新版本安装器及 `--update-from v旧版本`，绑定原登记；需要替换策略时存在活动或无法确认的消费者均拒绝，工具不自行停止它们。策略字节完全相同的受管版本更新无需重新加载。
+
+退出码为 0 检查通过、1 已明确失败、2 参数无效、4 恢复不确定。退出 4 时保留 `/var/lib/vap-host/transaction.json`，按安全失败阶段处理，不能删除登记后强行重新初始化。正常宿主重启后的持久性须在专用目标宿主独立验证；安装器不执行重启。
+
 使用包含环境适配功能的 Docker Hub 镜像时，按[拉取与启动说明](dockerhub-release.md#发布镜像的使用与启动)首次配置 `.env` 并初始化凭据，随后直接执行 `docker compose up -d`；不需要用户 JSON。`deploy/compose.registry.yaml` 清除本地构建和 JSON 挂载，启动时将显式传入的参数转换为容器临时配置。下列源码构建命令继续采用旧文件模式。两种方式复用同一份能力、凭据、缓存和回环发布配置。
 
 准备根目录 `credentials.local.json` 并设为 `0600`。默认容器配置 `deploy/config.container.example.json` 在容器内部监听 `0.0.0.0:1080`，强制使用只读秘密 `/run/secrets/proxy_credentials`；宿主发布地址默认仍是 `127.0.0.1`。
@@ -105,7 +125,7 @@ scripts/validate-docker.sh --require-apparmor
 
 ## x86_64 离线容器部署
 
-优先使用已整合修复及来源算法兼容开关的第三版离线包，按[包内说明](../deploy/cloud/README.md)加载镜像和专用策略，再运行 `bash manage.sh init`、`bash manage.sh check`、`bash manage.sh up`。管理入口自动选择安全策略覆盖文件，使用固定项目名，避免换包目录后意外创建另一个缓存卷。初始化不覆盖有效凭据，不在终端输出密码。运行配置允许编辑，程序、镜像与策略仍核对交付摘要。当前公开来源的旧算法需由部署者显式在配置中开启，默认仍拒绝。
+优先使用已整合修复及来源算法兼容开关的第三版离线包，按[包内说明](../deploy/cloud/README.md)加载镜像和专用策略，再运行 `bash manage.sh init`、`bash manage.sh check`、`bash manage.sh up`。管理入口自动选择安全策略覆盖文件，使用固定项目名，避免换包目录后意外创建另一个缓存卷。初始化不覆盖有效凭据，不在终端输出密码。运行配置允许编辑，程序、镜像与策略仍核对交付摘要。该旧版离线包的默认值仍为 false；2026-10-16 后新增的 Linux／Docker 默认兼容行为见下节，不改变已发布包。
 
 `bash manage.sh status` 查询状态，`bash manage.sh ready` 验证出口就绪；等待节点时普通查询可成功，而就绪查询返回 3。`bash manage.sh stop` 使用十五秒停止宽限并保留卷，`bash manage.sh logs` 查看最后一百行日志。状态、停止与日志不依赖镜像归档是否还存在。编排启动与停止行为依据[官方启动说明](https://docs.docker.com/reference/cli/docker/compose/up/)及[停止说明](https://docs.docker.com/reference/cli/docker/compose/stop/)。
 
@@ -138,3 +158,58 @@ scripts/validate-docker.sh --require-apparmor
 在部署配置中设置 `"countries": ["JP", "SG"]` 即仅选择日本、新加坡节点，省略或 `[]` 接受全部。筛选会重新应用到缓存恢复，不匹配且无健康活动出口时等待，不回退到其他地区；此前合规选出的健康活动出口沿用原维持规则，断开后不从范围外恢复；修改后重启。设置 `"timezone": "Asia/Tokyo"` 可调整日志时区，默认上海；支持夏令时，状态及缓存保持 UTC，容器环境变量 TZ 不覆盖配置。示例文件保持默认全部地区。
 
 通过 GitHub 版本标签发布 Docker Hub 镜像见[操作说明](dockerhub-release.md)。公开发布目前固定为 Linux x86_64。
+
+## 日志等级与启动摘要
+
+本功能需要包含日志配置的新镜像；修改配置后重新创建或启动实例，旧公开镜像不会自动获得新字段。
+
+原生文件可设置 `log_level` 和 `log_summary_interval_seconds`；容器环境模式对应以下参数：
+
+```yaml
+environment:
+  VAP_CONFIG_MODE: environment
+  VAP_LOG_LEVEL: info
+  VAP_LOG_SUMMARY_INTERVAL_SECONDS: "60"
+```
+
+等级只接受精确小写 `error`、`warn`、`info`、`debug`，默认 `info`，显示所选等级及更严重事件。默认保留启动、停止、出口提升和恢复等生命周期，以及来源失败、活动出口失效等警告；普通候选详情、成功健康检查和周期摘要属于 `debug`。摘要间隔默认 60 秒，范围为 1—86400 秒整数；调试首条可以立即输出，随后不补发错过的周期。日志设置不改变实际健康检查、调度、退避或出口状态。
+
+容器空值采用默认；原生文件不读取宿主 `RUST_LOG` 或同名环境变量。未知等级、空白拼接、非整数或越界间隔会在创建运行网络资源前拒绝。没有关闭错误输出的静默等级，也不支持热更新。编排环境变更后执行 `docker compose up -d --no-deps proxy`，普通 `restart` 不重新读取编排变量。已有 Portainer Stack 中仅更新代理服务，保留其他服务。
+
+默认信息等级下，实际监听成功后输出一次 `startup_summary`，例如：
+
+```json
+{"event_type":"startup_summary","level":"info","state":"waiting","ready":false,"config":{"listen_address":"0.0.0.0","port":1080,"protocol":"socks5","listen_scope":"container_internal","countries":["JP"],"timezone":"Asia/Tokyo","max_connections":20,"log_level":"info","log_summary_interval_seconds":60,"data_dir":"/var/lib/vap","runtime_dir":"/run/vap","authentication_enabled":true}}
+```
+
+这是省略通用时间和实例字段的展示样例。完整日志保留时间、实例及事件上下文；地区空数组表示全部。摘要不包含用户名、凭据路径、密码、来源或检测地址。地址和端口是容器内部实际监听，宿主映射端口由编排决定；没有发布端口时不能据此判断宿主或公网可访问。`ready=false` 表示仍在等待已验证出口，须独立查询状态。出口提升、切换和恢复不重发启动摘要，失败启动没有成功摘要。
+
+`warn`／`error` 会隐藏信息等级摘要，状态查询仍独立有效；不能把无摘要或无候选调试日志当作实例死亡或没有检测。日志输出受限时可能丢失诊断，业务仍按原安全规则阻断、退休和回收，不因等待日志延长停止预算。
+
+日志轮转限制保存量，日志等级控制产生量，两者不同。可在代理服务单独配置轮转，勿为此修改整个 Stack：
+
+```yaml
+logging:
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
+
+
+## VPN Gate 算法兼容默认值（2026-10-16 源码修订）
+
+新版 Linux／Docker 在配置省略时默认 allow_legacy_vpngate_crypto=true；容器环境未设置或设为空字符串也采用 true。只接受已实现的完整 AES-128-CBC／SHA1 组合，不扩大算法列表，不放宽脚本、外部文件、压缩、证书及端点校验。
+
+需要严格模式时，在环境模式设置 VAP_ALLOW_LEGACY_VPNGATE_CRYPTO="false"，或在文件模式设置 allow_legacy_vpngate_crypto=false。显式 false 始终优先，不会被默认值覆盖；更新镜像不会修改用户已有配置。苹果原生默认仍为 false，兼容算法尚未支持，不因本次改动增加支持承诺。
+
+本修订尚未发布，旧镜像仍需显式设置 true 并重新创建服务才能启用兼容。
+
+
+## 活动出口检查频率
+
+新版默认每 60 秒对活动出口做一次网络可用性检查，单次总超时仍为 5 秒；检查不重叠。容器环境模式可设置 VAP_HEALTH_INTERVAL_SECONDS="60" 和 VAP_HEALTH_TIMEOUT_SECONDS="5"，文件模式使用 health_interval_seconds 和 health_timeout_seconds。间隔必须为可表示的正整数秒且严格大于超时；省略或容器空值采用默认，显式旧值 10 仍保持 10。修改环境后重新创建服务生效。
+
+默认 60 秒将正常运行中的检查频率降低为旧默认的六分之一，代价是仅表现为出口不可达的故障可能等待约一个周期再开始确认，之后还需检测耗时与调度。隧道／工作进程结构检查仍按原有每秒周期执行，首次出口验证也不等待此周期。此参数与 Dockerfile 的 30 秒本地实例健康检查、日志摘要间隔相互独立，不延迟已发现故障后的阻断。
+
+已发布镜像也支持此配置项，可先在 Portainer 服务环境中设置 VAP_HEALTH_INTERVAL_SECONDS="60" 并重新创建服务；新的默认值尚未发布。

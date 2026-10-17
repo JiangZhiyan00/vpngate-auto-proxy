@@ -53,7 +53,7 @@ async fn background_candidates_release_workers_and_source_removal_keeps_active()
         .await
         .unwrap();
     let dns = std::fs::read("/etc/resolv.conf").unwrap();
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.source_refresh_seconds = 2;
         c.candidate_interval_seconds = 2;
         c.candidate_result_ttl_seconds = 1;
@@ -117,7 +117,7 @@ async fn background_candidates_release_workers_and_source_removal_keeps_active()
 #[ignore = "需要受控 Linux 缓存重启与来源失败"]
 async fn source_failure_preserves_cache_age_and_restart_revalidates() {
     let _state = FixtureStateGuard::set(json!({"source_protocols":["tcp"]}));
-    let first = ServiceFixture::start_with(false, 50, |c| {
+    let first = ServiceFixture::start_debug_with(false, 50, |c| {
         c.source_refresh_seconds = 1;
         c.retry_initial_seconds = 1;
     });
@@ -145,7 +145,7 @@ async fn source_failure_preserves_cache_age_and_restart_revalidates() {
         std::fs::set_permissions(data.join(name), std::fs::Permissions::from_mode(0o600)).unwrap();
     }
     drop(first);
-    let mut second = ServiceFixture::start_with(false, 50, |c| {
+    let mut second = ServiceFixture::start_debug_with(false, 50, |c| {
         c.data_dir = data;
     });
     wait_event(&second, "cache_loaded", 1).await;
@@ -202,7 +202,7 @@ async fn candidate_soak_preserves_business_dns_and_host_network() {
         tcpdump.try_wait().unwrap().is_none(),
         "抓包未启动：需要测试专用原始套接字能力"
     );
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         if duration < 1800 {
             c.candidate_interval_seconds = 1;
             c.source_refresh_seconds = 1;
@@ -316,7 +316,7 @@ async fn candidate_soak_preserves_business_dns_and_host_network() {
 #[ignore = "需要受控 Linux 候选整体重试和分层诊断"]
 async fn candidate_retries_keep_unique_node_budget_and_separate_layers() {
     let _state = FixtureStateGuard::set(json!({"source_count":5,"code":503}));
-    let service = ServiceFixture::start_with(false, 50, |c| {
+    let service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.candidate_batch_size = 2;
         c.candidate_retries = 1;
         c.exit_check_max_attempts = 1;
@@ -414,7 +414,7 @@ async fn port_timeout_preserves_observed_layer_without_inventing_tunnel_results(
     )
     .await
     .unwrap();
-    let service = ServiceFixture::start_with(false, 50, |c| {
+    let service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.tunnel_timeout_seconds = 1;
         c.port_probe_timeout_seconds = 3;
     });
@@ -459,7 +459,7 @@ async fn port_timeout_preserves_observed_layer_without_inventing_tunnel_results(
 #[ignore = "需要受控 Linux 空来源退避及恢复"]
 async fn empty_source_uses_recovery_backoff_and_detects_new_nodes() {
     let _empty = FixtureStateGuard::set(json!({"source_count":0}));
-    let service = ServiceFixture::start_with(false, 50, |c| {
+    let service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.retry_initial_seconds = 1;
         c.retry_max_seconds = 2;
     });

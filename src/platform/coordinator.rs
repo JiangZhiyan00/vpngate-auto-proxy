@@ -419,7 +419,7 @@ fn persist(config: &AppConfig, storage: &Storage, catalog: &Catalog, active: Opt
     if storage.save_checks(&checks, &present, active).is_err() {
         service::emit(
             config,
-            "diagnostics_write_failed",
+            crate::logging::EventKind::DiagnosticsWriteFailed,
             ServiceState::Validating,
             None,
             None,

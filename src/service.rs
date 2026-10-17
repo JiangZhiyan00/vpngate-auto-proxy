@@ -2,6 +2,7 @@
 use crate::{
     config::{AppConfig, Credentials},
     domain::*,
+    logging::{self, EventKind, LogLevel, LogPolicy, SummaryClock},
     netd::{self, InstanceLock, protocol::*, system::*, workers::WorkerManager},
     probe,
     scheduler::{Backoff, Catalog, Scheduler},
@@ -33,6 +34,7 @@ struct Bootstrap {
     config: AppConfig,
     credentials: Option<Credentials>,
     instance_id: uuid::Uuid,
+    listen_scope: logging::ListenScope,
 }
 pub async fn wait_signal() -> Result<()> {
     let mut terminate = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
@@ -41,29 +43,18 @@ pub async fn wait_signal() -> Result<()> {
 }
 pub fn emit(
     config: &AppConfig,
-    event_type: &str,
+    event_type: EventKind,
     state: ServiceState,
     node: Option<NodeId>,
     worker: Option<WorkerId>,
     reason: Option<&str>,
     elapsed: Duration,
 ) {
-    let timestamp = chrono::Utc::now()
-        .with_timezone(&config.timezone)
-        .fixed_offset();
-    let event = Event {
-        timestamp,
-        event_type: event_type.into(),
-        node_id: node,
-        worker_id: worker,
-        state,
-        reason: reason.map(str::to_owned),
-        elapsed_ms: elapsed.as_millis().min(u128::from(u64::MAX)) as u64,
-    };
-    if let Ok(line) = serde_json::to_string(&event) {
-        eprintln!("{line}");
+    if let Some(event) = logging::event(config, event_type, state, node, worker, reason, elapsed) {
+        logging::write(config, event_type, &event);
     }
 }
+
 struct EmptyRuntimeGuard {
     path: std::path::PathBuf,
     created: bool,
@@ -237,6 +228,7 @@ pub async fn run(config: AppConfig, credentials: Option<Credentials>) -> Result<
         config: config.clone(),
         credentials,
         instance_id,
+        listen_scope: config.listen_scope,
     })?);
     parent.write_all(&payload).await?;
     parent.shutdown().await?;
@@ -293,6 +285,18 @@ pub async fn run(config: AppConfig, credentials: Option<Credentials>) -> Result<
     }
     .await;
     cleaned.map_err(|error| ShutdownFailure(error.to_string()))?;
+    if result.is_ok() {
+        emit(
+            &config,
+            EventKind::Stopped,
+            ServiceState::Stopped,
+            None,
+            None,
+            None,
+            Duration::ZERO,
+        );
+    }
+    logging::flush(deadline.saturating_duration_since(Instant::now())).await;
     result
 }
 pub(crate) fn revoke_active(active: &watch::Sender<Option<ActiveWorker>>) {
@@ -322,7 +326,8 @@ pub async fn controller() -> Result<()> {
     .await
     .context("启动资料读取超时")??;
     ensure!(bytes.len() <= 4 * 1024 * 1024, "启动资料过大");
-    let payload: Bootstrap = serde_json::from_slice(&bytes).context("启动资料无效")?;
+    let mut payload: Bootstrap = serde_json::from_slice(&bytes).context("启动资料无效")?;
+    payload.config.listen_scope = payload.listen_scope;
     payload.config.validate()?;
     let control =
         std::os::unix::net::UnixListener::from(std::io::stdin().as_fd().try_clone_to_owned()?);
@@ -338,8 +343,15 @@ pub async fn controller() -> Result<()> {
         revoke_active(&stopping_active);
         stop.cancel();
     });
-    let gateway = tokio::spawn(socks::run_gateway(
-        payload.config.listen.into(),
+    let listener =
+        socks::bind_gateway(payload.config.listen.into(), payload.credentials.as_ref()).await?;
+    if let Some(summary) =
+        logging::StartupSummary::new(&payload.config, payload.instance_id, listener.local_addr()?)
+    {
+        logging::write(&payload.config, EventKind::StartupSummary, &summary);
+    }
+    let gateway = tokio::spawn(socks::serve_gateway(
+        listener,
         active_rx,
         payload.credentials,
         quota.clone(),
@@ -462,9 +474,9 @@ async fn attempt_node(
         emit(
             &config,
             if role == WorkerRole::Pending {
-                "pending_started"
+                EventKind::PendingStarted
             } else {
-                "candidate_started"
+                EventKind::CandidateStarted
             },
             ServiceState::Validating,
             Some(node.id.clone()),
@@ -487,7 +499,7 @@ async fn attempt_node(
                 checks.extend([*port_result, *tunnel_result]);
                 emit(
                     &config,
-                    "tunnel_connected",
+                    EventKind::TunnelConnected,
                     ServiceState::Validating,
                     Some(node.id.clone()),
                     Some(id),
@@ -675,7 +687,7 @@ async fn control_loop(
             catalog.merge(&config.selected_source(&snapshot), None);
             emit(
                 config,
-                "cache_loaded",
+                EventKind::CacheLoaded,
                 ServiceState::Fetching,
                 None,
                 None,
@@ -685,7 +697,7 @@ async fn control_loop(
         }
         Err(_) => emit(
             config,
-            "cache_ignored",
+            EventKind::CacheIgnored,
             ServiceState::Fetching,
             None,
             None,
@@ -697,7 +709,7 @@ async fn control_loop(
     if storage.load_checks().is_err() {
         emit(
             config,
-            "diagnostics_ignored",
+            EventKind::DiagnosticsIgnored,
             ServiceState::Fetching,
             None,
             None,
@@ -724,7 +736,7 @@ async fn control_loop(
     let mut next_health = Instant::now();
     let mut recovering = false;
     let mut round_was_running = false;
-    let mut next_summary = Instant::now();
+    let mut summary_clock = SummaryClock::new(LogPolicy::from(config).summary_interval);
     let mut source_error: Option<String> = None;
     let mut last_error: Option<String> = None;
     let mut interval = tokio::time::interval(Duration::from_millis(100));
@@ -756,7 +768,7 @@ async fn control_loop(
                         activity.last_check=Some(ActiveCheckSummary {node_id:node.id.clone(),worker_id:id,finished_at,success:report.success,attempts:report.attempts,elapsed_ms:report.elapsed.as_millis().min(u128::from(u64::MAX)) as u64,status:report.status,failure:reason.clone()});
                         catalog.record(CheckResult {node_id:node.id.clone(),profile_digest:node.profile_digest.clone(),layer:Layer::Exit,outcome:if report.success {Outcome::Succeeded}else{Outcome::Failed},started_at,finished_at,elapsed_ms:report.elapsed.as_millis().min(u128::from(u64::MAX)) as u64,attempts:report.attempts,status:report.status,expires_at:if report.success {finished_at.checked_add_signed(chrono::Duration::seconds(i64::try_from(config.candidate_result_ttl_seconds)?))}else{None},failure_reason:reason.clone()});
                         let detail=serde_json::to_string(&activity.last_check)?;
-                        emit(config,if report.success {"active_check_succeeded"}else{"active_check_failed"},ServiceState::Ready,Some(node.id.clone()),Some(id),Some(&detail),report.elapsed);
+                        emit(config,if report.success {EventKind::ActiveCheckSucceeded}else{EventKind::ActiveCheckFailed},ServiceState::Ready,Some(node.id.clone()),Some(id),Some(&detail),report.elapsed);
                         if !report.success {blocked=Some((id,reason.unwrap_or_else(||"出口检测全部失败".into())));}
                     },
                     Err(error) if !error.is_cancelled()=>return Err(error.into()),
@@ -766,6 +778,10 @@ async fn control_loop(
             Some(value)=source_tasks.join_next(),if !source_tasks.is_empty()=>{
                 match value.context("来源刷新任务退出失败")? {
                     Ok(snapshot)=>{
+                        let selected = config.selected_source(&snapshot);
+                        let previous_nodes: std::collections::BTreeMap<_, _> = catalog.nodes.iter().filter(|(_, node)| node.present).map(|(id, node)| (id.clone(), node.profile_digest.clone())).collect();
+                        let incoming_nodes: std::collections::BTreeMap<_, _> = selected.nodes.iter().map(|node| (node.id.clone(), node.profile_digest.clone())).collect();
+                        let source_changed = fetched_at.is_none() || source_error.is_some() || previous_nodes != incoming_nodes;
                         source_empty_error = config.source_empty_reason(&snapshot);
                         let source_reopens = source_adds_usable_nodes(&catalog, &config.selected_source(&snapshot),
                             !source_summary(fetched_at,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired);
@@ -775,16 +791,17 @@ async fn control_loop(
                         for (id,(digest,token)) in &in_flight {
                             if !catalog.nodes.get(id).is_some_and(|n|n.present && &n.profile_digest==digest) {token.cancel();}
                         }
-                        if storage.save_source_with_policy(&snapshot, config.allow_legacy_vpngate_crypto).is_err() {emit(config,"cache_write_failed",ServiceState::Fetching,None,None,Some("来源缓存写入失败"),Duration::ZERO);}
+                        if storage.save_source_with_policy(&snapshot, config.allow_legacy_vpngate_crypto).is_err() {emit(config,EventKind::CacheWriteFailed,ServiceState::Fetching,None,None,Some("来源缓存写入失败"),Duration::ZERO);}
                         next_source=Instant::now()+Duration::from_secs(config.source_refresh_seconds);
                         if source_reopens && !scheduler.is_running() && active.borrow().is_none() && catalog.nodes.values().any(|node|node.present) {next_round=Instant::now();}
                         persist_checks(config, &storage,&catalog,active_id.as_ref());
-                        emit(config,"source_updated",if active_id.is_some() {ServiceState::Ready} else {ServiceState::Fetching},None,None,source_empty_error.as_deref(),Duration::ZERO);
+                        if source_changed { emit(config,EventKind::SourceChanged,if active_id.is_some() {ServiceState::Ready} else {ServiceState::Fetching},None,None,source_empty_error.as_deref(),Duration::ZERO); }
+                        emit(config,EventKind::SourceUpdated,if active_id.is_some() {ServiceState::Ready} else {ServiceState::Fetching},None,None,source_empty_error.as_deref(),Duration::ZERO);
                     }
                     Err(_)=>{
                         source_error=Some("来源获取或解析失败，保留原快照与时间".into());
                         next_source=Instant::now()+Duration::from_secs(source_delay.next_delay());
-                        emit(config,"source_failed",if active.borrow().is_some(){ServiceState::Ready}else{ServiceState::Waiting},None,None,source_error.as_deref(),Duration::ZERO);
+                        emit(config,EventKind::SourceFailed,if active.borrow().is_some(){ServiceState::Ready}else{ServiceState::Waiting},None,None,source_error.as_deref(),Duration::ZERO);
                     }
                 }
             },
@@ -804,12 +821,12 @@ async fn control_loop(
                         recovering=false;node_delay.reset();
                         next_structure=Instant::now()+Duration::from_secs(1);
                         next_health=Instant::now()+Duration::from_secs(config.health_interval_seconds);
-                        emit(config,"active_promoted",ServiceState::Ready,Some(result.node.id.clone()),Some(result.worker),None,Duration::ZERO);
+                        emit(config,EventKind::ActivePromoted,ServiceState::Ready,Some(result.node.id.clone()),Some(result.worker),None,Duration::ZERO);
                     } else {stop_worker(client,result.worker).await?;}
                 }
                 let active_id=active.borrow().as_ref().map(|a|a.node_id.clone());
                 persist_checks(config, &storage,&catalog,active_id.as_ref());
-                emit(config,"candidate_result",if active_id.is_some(){ServiceState::Ready}else{ServiceState::Validating},Some(result.node.id),Some(result.worker),None,Duration::ZERO);
+                emit(config,EventKind::CandidateResult,if active_id.is_some(){ServiceState::Ready}else{ServiceState::Validating},Some(result.node.id),Some(result.worker),None,Duration::ZERO);
             },
             _=interval.tick()=>{},
         }
@@ -822,7 +839,7 @@ async fn control_loop(
             last_error = Some(reason.clone());
             emit(
                 config,
-                "active_blocked",
+                EventKind::ActiveBlocked,
                 ServiceState::Switching,
                 Some(old.node_id),
                 Some(id),
@@ -850,7 +867,7 @@ async fn control_loop(
         if now >= next_source && source_tasks.is_empty() {
             emit(
                 config,
-                "source_fetch",
+                EventKind::SourceFetch,
                 if active.borrow().is_some() {
                     ServiceState::Ready
                 } else {
@@ -885,7 +902,7 @@ async fn control_loop(
                 });
             emit(
                 config,
-                "round_finished",
+                EventKind::RoundFinished,
                 if ready {
                     ServiceState::Ready
                 } else {
@@ -907,7 +924,7 @@ async fn control_loop(
             round_was_running = scheduler.is_running();
             emit(
                 config,
-                "round_started",
+                EventKind::RoundStarted,
                 if active_id.is_some() {
                     ServiceState::Ready
                 } else {
@@ -936,7 +953,7 @@ async fn control_loop(
         {
             next_source = next_source.min(next_round);
         }
-        if now >= next_summary {
+        if config.log_level == LogLevel::Debug && summary_clock.due(now) {
             emit_summary(
                 config,
                 &catalog,
@@ -946,7 +963,6 @@ async fn control_loop(
                 next_round,
                 &activity,
             );
-            next_summary = now + Duration::from_secs(1);
         }
         let current_active = active.borrow().clone();
         if let Some(current) = current_active {
@@ -1076,7 +1092,7 @@ fn persist_checks(
     if storage.save_checks(&checks, &present, active).is_err() {
         emit(
             config,
-            "diagnostics_write_failed",
+            EventKind::DiagnosticsWriteFailed,
             ServiceState::Validating,
             None,
             None,
@@ -1158,7 +1174,11 @@ fn emit_summary(
     let now = chrono::Utc::now();
     let until = chrono::Duration::from_std(next.saturating_duration_since(Instant::now())).ok();
     let next = until.and_then(|v| now.checked_add_signed(v)).unwrap_or(now);
+    if !LogPolicy::from(config).allows(LogLevel::Debug) {
+        return;
+    }
     let event = Event {
+        level: LogLevel::Debug,
         timestamp: now.with_timezone(&config.timezone).fixed_offset(),
         event_type: "runtime_summary".into(),
         node_id: None,
@@ -1185,7 +1205,5 @@ fn emit_summary(
         ready: activity.ready,
         activity,
     };
-    if let Ok(line) = serde_json::to_string(&summary) {
-        eprintln!("{line}");
-    }
+    logging::write(config, EventKind::RuntimeSummary, &summary);
 }

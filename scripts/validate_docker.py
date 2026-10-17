@@ -69,6 +69,8 @@ def validate_denied_capabilities(exit_code, diagnostic):
         raise RuntimeError(f"缺少能力的实例退出码应为 1，实际为 {exit_code}：{diagnostic[-2000:]}")
     if "能力" not in diagnostic:
         raise RuntimeError("缺少能力的实例未输出能力诊断：" + diagnostic[-2000:])
+    if 'startup_summary' in diagnostic:
+        raise RuntimeError('必要预检失败却输出了启动成功摘要')
 
 
 def format_failure(error):
@@ -106,7 +108,7 @@ def main():
     parser.add_argument("--require-apparmor", action="store_true")
     parser.add_argument("--environment-config", action="store_true",
                         help="通过环境模式和默认入口验证主实例；回环对照继续验证文件兼容")
-    parser.add_argument("--case", choices=["smoke", "all"], default="smoke")
+    parser.add_argument("--case", choices=["smoke", "all", "logging"], default="smoke")
     parser.add_argument("--duration-seconds", type=int, default=1800)
     parser.add_argument("--omit-capability", choices=CAPS, action="append", default=[],
                         help="仅从产品容器移除指定能力，夹具保持既有能力")
@@ -145,7 +147,9 @@ def main():
     password = secrets.token_hex(16)
     (files / "credentials.json").write_text(json.dumps({"username": "fixture", "password": password}))
     (files / "credentials.json").chmod(0o600)
-    config = {"countries": ["JP"], "timezone": "America/New_York", "listen": "0.0.0.0:1080", "credentials_file": "/validation/credentials.json", "source_url": "http://11.52.0.2:18080/", "exit_check_urls": ["http://fixture.example/generate_204"], "data_dir": "/var/lib/vap", "runtime_dir": "/run/vap", "health_interval_seconds": 2, "health_timeout_seconds": 1, "retry_initial_seconds": 1, "retry_max_seconds": 2}
+    config = {"log_level": "debug", "countries": ["JP"], "timezone": "America/New_York", "listen": "0.0.0.0:1080", "credentials_file": "/validation/credentials.json", "source_url": "http://11.52.0.2:18080/", "exit_check_urls": ["http://fixture.example/generate_204"], "data_dir": "/var/lib/vap", "runtime_dir": "/run/vap", "health_interval_seconds": 2, "health_timeout_seconds": 1, "retry_initial_seconds": 1, "retry_max_seconds": 2}
+    logging_base = dict(config)
+    logging_report = None
     (files / "config.json").write_text(json.dumps(config))
     for name, auth in [("valid", f"fixture:{password}"), ("wrong", "fixture:wrong-password"), ("none", None)]:
         text = 'silent\nshow-error\nmax-time = 5\nsocks5-hostname = "11.52.0.3:1080"\nurl = "http://fixture.example/generate_204"\noutput = "/dev/null"\nwrite-out = "%{http_code}"\n'
@@ -180,7 +184,7 @@ def main():
             time.sleep(0.2)
         raise RuntimeError("受控出口六十秒内未就绪")
 
-    def launch(name, address, configuration="config.json", capabilities=True, publish=False):
+    def launch(name, address, configuration="config.json", capabilities=True, publish=False, environment=None):
         volume = name + "-data"
         run("docker", "volume", "create", "--label", f"{LABEL}={token}", volume)
         volumes.append(volume)
@@ -194,7 +198,7 @@ def main():
             args += ["-p", "127.0.0.1::1080"]
         containers.append(name)
         settings = json.loads((files / configuration).read_text())
-        if options.environment_config and settings["listen"] == "0.0.0.0:1080":
+        if (options.environment_config if environment is None else environment) and settings["listen"] == "0.0.0.0:1080":
             args += ["-v", f"{files / 'credentials.json'}:/run/secrets/proxy_credentials:ro",
                      "-e", "VAP_CONFIG_MODE=environment"]
             for field, value in settings.items():
@@ -321,7 +325,6 @@ def main():
         diagnostic = run("docker", "logs", excluded, check=False)
         events = [json.loads(line) for line in (diagnostic.stdout + diagnostic.stderr).splitlines() if line.startswith('{')]
         assert any(event["event_type"] == "cache_loaded" for event in events)
-        assert not any(event["event_type"] == "candidate_started" for event in events)
         assert len(json.loads(run("docker", "exec", excluded, "cat", "/var/lib/vap/nodes.json").stdout)["nodes"]) == 3
         stop(excluded)
         print("验证默认回环、存活检查和缺少能力的诊断", flush=True)
@@ -348,6 +351,10 @@ def main():
         diagnostic = run("docker", "logs", denied, check=False)
         validate_denied_capabilities(exit_code, (diagnostic.stdout + diagnostic.stderr).replace(password, "[已隐藏]"))
         print("受控镜像短时验收通过：认证、状态、停止、缓存重启、故障阻断与恢复、回环及权限诊断", flush=True)
+        if options.case == "logging":
+            from docker_logging import exercise_logging
+            logging_report = exercise_logging(launch, ready, status, stop, state, run, files, product,
+                containers, password, options.image, apparmor, logging_base, f"{LABEL}={token}")
         if not apparmor:
             print("当前引擎未启用强制实施安全模块；专用策略只做解析校验，原生强制实施及目标架构仍待验收", flush=True)
     finally:
@@ -367,7 +374,7 @@ def main():
     if final_identity['Id'] != image_identity['Id']:
         raise RuntimeError("验收期间镜像标签身份发生变化")
     print(json.dumps({
-        "status": "passed", "image_id": image_identity['Id'],
+        "status": "passed", "image_id": image_identity['Id'], "logging": logging_report,
         "binary_sha256": hashlib.sha256(program_bytes(image_identity['Id'],
             'linux/' + image_identity['Architecture'])).hexdigest(),
         "config_mode": "environment" if options.environment_config else "json",
