@@ -501,3 +501,34 @@ fn help_flags_after_option_terminator_are_not_help_requests() {
     }
     assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
 }
+
+#[test]
+fn invalid_log_options_never_echo_values_or_publish_startup() {
+    let directory = tempfile::tempdir().unwrap();
+    for content in [
+        serde_json::json!({"log_level":"private-token-marker"}),
+        serde_json::json!({"log_summary_interval_seconds":0}),
+        serde_json::json!({"log_summary_interval_seconds":true}),
+    ] {
+        let config = directory.path().join("config.json");
+        std::fs::write(&config, content.to_string()).unwrap();
+        let result = std::process::Command::new(env!("CARGO_BIN_EXE_vap"))
+            .args(["run", "--config"])
+            .arg(config)
+            .env_clear()
+            .output()
+            .unwrap();
+        assert_eq!(result.status.code(), Some(2));
+        let output = String::from_utf8(result.stderr).unwrap();
+        assert!(output.contains("配置无效"));
+        assert!(output.contains(if content.get("log_level").is_some() {
+            "log_level"
+        } else {
+            "log_summary_interval_seconds"
+        }));
+        assert!(!output.contains("private-token-marker"));
+        assert!(!output.contains("startup_summary"));
+        assert!(result.stdout.is_empty());
+        assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
+}

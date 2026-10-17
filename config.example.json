@@ -3,9 +3,16 @@
   "countries": [],
   "timezone": "Asia/Shanghai",
   "source_url": "https://www.vpngate.net/api/iphone/",
-  "allow_legacy_vpngate_crypto": false,
-  "exit_check_urls": ["https://www.google.com/generate_204", "https://www.gstatic.com/generate_204"],
+  "allow_legacy_vpngate_crypto": true,
+  "exit_check_urls": [
+    "https://www.google.com/generate_204",
+    "https://www.gstatic.com/generate_204"
+  ],
   "data_dir": "/var/lib/vap",
   "runtime_dir": "/run/vap",
-  "macos": null
+  "macos": null,
+  "log_level": "info",
+  "log_summary_interval_seconds": 60,
+  "health_interval_seconds": 60,
+  "health_timeout_seconds": 5
 }

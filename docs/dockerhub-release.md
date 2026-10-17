@@ -29,6 +29,10 @@ git push origin v1.0.0
 
 GitHub 版本发布中的 `vpngate-source-v1.0.0.tar.gz` 包含项目源码、锁定的完整依赖原包、系统包来源、配方及声明。按附件 `SHA256SUMS` 核验；离线恢复依赖的步骤见归档内说明。公开源码附件必须持续可用。
 
+新增宿主准备功能的版本还附带 `vap-host-init-vX.Y.Z.py`、`host-setup.json` 和 `host-setup-command.txt`，与最终验收镜像身份、版本、来源提交及策略摘要绑定。`SHA256SUMS` 同时保留源码和新增材料的摘要；先公开这些附件，再推送版本和 `latest` 镜像。自包含安装器无需完整源码，执行阶段不联网。首次部署复制同版本 `host-setup-command.txt` 中的一条受校验命令，随后在 Portainer 或编排中启动代理即可；权限、显式接管和更新边界见[宿主准备说明](deployment.md#一次宿主策略准备)。历史版本未附带这些材料，不补写或覆盖旧附件。
+
+本功能的发布准备还运行 `--case logging`，在原受控短试之外核对四等级、两种配置模式、十分钟默认安静及 1／60／300 秒摘要。工作流继续要求强制 AppArmor；任一检查失败均不得公开附件或推送镜像。公开准备要求干净且已提交的源码，拒绝把工作区改动绑定到旧提交；版本材料应在本次代码提交后生成。
+
 工作流不会自动覆盖已存在的发布附件。若发布在上传附件之后失败，应先核对失败原因、已存在的源码附件及镜像状态；同一版本已公开时不要移动标签或用不同代码覆盖镜像，修复应使用新版本。首次云端工作流尚需在配置密钥后触发，仓库本地测试不能替代 GitHub 与 Docker Hub 的真实发布验证。
 
 ## 发布镜像的使用与启动
@@ -55,12 +59,12 @@ VAP_PORT=1080
 VAP_COUNTRIES=JP,SG
 VAP_TIMEZONE=Asia/Shanghai
 VAP_MAX_CONNECTIONS=50
-VAP_ALLOW_LEGACY_VPNGATE_CRYPTO=false
+VAP_ALLOW_LEGACY_VPNGATE_CRYPTO=true
 ```
 
-`VAP_COUNTRIES` 留空表示全部；国家及检测地址列表用逗号分隔。`VAP_SOURCE_URL`、`VAP_EXIT_CHECK_URLS` 留空采用程序默认。现有数字配置字段使用大写 `VAP_` 名称，例如 `VAP_CANDIDATE_CONCURRENCY=2`、`VAP_HEALTH_INTERVAL_SECONDS=10`；默认值及约束见[配置契约](../specs/001-vpngate-auto-proxy/contracts/config.md)。布尔仅接受 `true`、`false`，非法参数在创建网络资源前拒绝。启动时自动生成临时 JSON，不在宿主维护此文件，不读取宿主代理环境。
+`VAP_COUNTRIES` 留空表示全部；国家及检测地址列表用逗号分隔。`VAP_SOURCE_URL`、`VAP_EXIT_CHECK_URLS` 留空采用程序默认。现有数字配置字段使用大写 `VAP_` 名称，例如 `VAP_CANDIDATE_CONCURRENCY=2`、`VAP_HEALTH_INTERVAL_SECONDS=60`；默认值及约束见[配置契约](../specs/001-vpngate-auto-proxy/contracts/config.md)。布尔仅接受 `true`、`false`，非法参数在创建网络资源前拒绝。启动时自动生成临时 JSON，不在宿主维护此文件，不读取宿主代理环境。
 
-默认严格算法模式可能拒绝来源中的旧算法节点；若明确接受兼容方案，可将 `.env` 中的 `VAP_ALLOW_LEGACY_VPNGATE_CRYPTO` 改为 `true`，详见[部署说明](deployment.md)。代理密码仍由独立凭据文件挂载，不放进环境变量。
+新版 Linux／Docker 默认允许 VPN Gate 固定的旧算法组合；无需配置兼容开关。需要严格算法模式时，将 `.env` 中的 `VAP_ALLOW_LEGACY_VPNGATE_CRYPTO` 设为 `false`，详见[部署说明](deployment.md)。代理密码仍由独立凭据文件挂载，不放进环境变量。
 
 在启用 AppArmor 的 Debian 宿主，首次加载生产专用策略：
 
@@ -99,3 +103,9 @@ docker compose up -d
 ```
 
 修改 `.env` 的地区、时区等参数后执行 `docker compose up -d`，编排会根据环境变更重新创建容器；`restart` 不重新读取 `.env`，不能用于应用这些变更。升级时使用新版本对应部署文件，在 `.env` 更新镜像版本，执行 `docker compose pull proxy` 及 `docker compose up -d`；不要同时运行两个实例管理同一数据卷。旧镜像尚不识别环境配置模式，应升级到包含该功能的发布版本，或继续使用旧 JSON 方式。
+
+## 新版本日志设置
+
+包含本功能的新镜像可在 `.env` 或 Portainer 的代理环境中设置 `VAP_LOG_LEVEL=info` 与 `VAP_LOG_SUMMARY_INTERVAL_SECONDS=60`。等级仅支持 error／warn／info／debug，默认 info；摘要间隔仅允许 1—86400 秒整数，周期摘要仅在 debug 输出。文件模式使用 log_level 与 log_summary_interval_seconds。配置变化后重新创建容器，日志轮转继续由编排管理。
+
+真实监听成功后默认打印一次安全配置摘要，显示容器内部地址、端口、地区、时区、连接限额、日志设置和认证布尔值；不显示密码或宿主映射端口。严格等级隐藏摘要，`vap status --runtime-dir /run/vap --json --check-ready` 仍按原 0／3 就绪语义工作。完整样例及排查见[日志说明](deployment.md#日志等级与启动摘要)。

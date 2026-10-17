@@ -112,7 +112,7 @@ fn active_record(service: &ServiceFixture) -> Value {
 async fn structural_failure_closes_old_connection_before_http_cycle_and_recovers_same_listener() {
     let _state = FixtureStateGuard::set(json!({}));
     let observation = NetworkObservation::start().await;
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.health_interval_seconds = 60;
         c.health_timeout_seconds = 1;
     });
@@ -172,7 +172,7 @@ async fn structural_failure_closes_old_connection_before_http_cycle_and_recovers
 async fn all_http_checks_fail_blocks_requests_waits_without_exit_then_revalidates() {
     let _state = FixtureStateGuard::set(json!({}));
     let observation = NetworkObservation::start().await;
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.health_interval_seconds = 2;
         c.health_timeout_seconds = 1;
         c.retry_initial_seconds = 1;
@@ -230,7 +230,7 @@ async fn waiting_without_nodes_stays_alive_with_backoff_and_no_direct_business_o
     assert!(duration >= 3);
     let _state = FixtureStateGuard::set(json!({"code":503}));
     let observation = NetworkObservation::start().await;
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.exit_check_max_attempts = 1;
         if duration < 1800 {
             c.retry_initial_seconds = 1;
@@ -301,7 +301,7 @@ async fn waiting_without_nodes_stays_alive_with_backoff_and_no_direct_business_o
 #[ignore = "需要受控 Linux 活动检测总时限"]
 async fn active_check_total_timeout_blocks_without_waiting_for_another_round() {
     let _state = FixtureStateGuard::set(json!({"delay":0}));
-    let service = ServiceFixture::start_with(false, 50, |c| {
+    let service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.exit_check_urls = vec!["http://11.54.0.2/slow".parse().unwrap()];
         c.health_interval_seconds = 2;
         c.health_timeout_seconds = 1;
@@ -326,7 +326,7 @@ async fn active_check_total_timeout_blocks_without_waiting_for_another_round() {
 #[ignore = "需要受控 Linux 健康检测与候选共存"]
 async fn healthy_activity_keeps_existing_connection_and_does_not_rotate() {
     let _state = FixtureStateGuard::set(json!({}));
-    let mut service = ServiceFixture::start_with(false, 50, |c| {
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.health_interval_seconds = 2;
         c.health_timeout_seconds = 1;
         c.candidate_interval_seconds = 1;
@@ -356,7 +356,7 @@ async fn healthy_activity_keeps_existing_connection_and_does_not_rotate() {
 #[ignore = "需要受控 Linux 来源刷新与节点退避独立调度"]
 async fn identical_source_refresh_does_not_shorten_failed_node_recovery_backoff() {
     let _state = FixtureStateGuard::set(json!({"code":503,"source_count":1}));
-    let service = ServiceFixture::start_with(false, 50, |config| {
+    let service = ServiceFixture::start_debug_with(false, 50, |config| {
         config.source_refresh_seconds = 1;
         config.retry_initial_seconds = 4;
         config.retry_max_seconds = 4;

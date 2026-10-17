@@ -136,7 +136,7 @@ def validate_config(root):
                           'data_dir': '/var/lib/vap', 'runtime_dir': '/run/vap'}.items():
         if value.get(key) != expected:
             raise RuntimeError('离线部署配置须保持容器映射一致：' + key + '=' + expected)
-    legacy = value.get('allow_legacy_vpngate_crypto', False)
+    legacy = value.get('allow_legacy_vpngate_crypto', True)
     if not isinstance(legacy, bool):
         raise RuntimeError('旧算法兼容开关须为 JSON 布尔值')
     return legacy

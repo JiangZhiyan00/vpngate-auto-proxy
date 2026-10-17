@@ -21,6 +21,11 @@ pub struct AppConfig {
     pub source_url: Url,
     pub countries: Vec<String>,
     pub timezone: chrono_tz::Tz,
+    pub log_level: crate::logging::LogLevel,
+    pub log_summary_interval_seconds: u64,
+    /// 只由启动入口传递；配置文件与普通环境不能覆盖显示上下文。
+    #[serde(skip)]
+    pub listen_scope: crate::logging::ListenScope,
     pub allow_legacy_vpngate_crypto: bool,
     pub source_refresh_seconds: u64,
     pub source_timeout_seconds: u64,
@@ -64,7 +69,10 @@ impl Default for AppConfig {
             source_url: Url::parse("https://www.vpngate.net/api/iphone/").expect("固定地址有效"),
             countries: Vec::new(),
             timezone: chrono_tz::Asia::Shanghai,
-            allow_legacy_vpngate_crypto: false,
+            log_level: crate::logging::LogLevel::Info,
+            log_summary_interval_seconds: 60,
+            listen_scope: crate::logging::ListenScope::ProcessLocal,
+            allow_legacy_vpngate_crypto: cfg!(target_os = "linux"),
             source_refresh_seconds: 1800,
             source_timeout_seconds: 15,
             source_cache_ttl_seconds: 86400,
@@ -76,7 +84,7 @@ impl Default for AppConfig {
             tunnel_timeout_seconds: 30,
             exit_check_timeout_seconds: 10,
             exit_check_max_attempts: 3,
-            health_interval_seconds: 10,
+            health_interval_seconds: 60,
             health_timeout_seconds: 5,
             candidate_retries: 0,
             retry_initial_seconds: 30,
@@ -105,6 +113,7 @@ impl AppConfig {
             credentials_file: Some("/run/secrets/proxy_credentials".into()),
             data_dir: "/var/lib/vap".into(),
             runtime_dir: "/run/vap".into(),
+            allow_legacy_vpngate_crypto: true,
             ..Self::default()
         })?;
         let fields = value.as_object_mut().expect("配置序列化为对象");
@@ -114,6 +123,7 @@ impl AppConfig {
                 && !matches!(
                     field.as_str(),
                     "countries"
+                        | "log_level"
                         | "timezone"
                         | "source_url"
                         | "exit_check_urls"
@@ -154,6 +164,7 @@ impl AppConfig {
                 serde_json::Value::String(raw)
             };
         }
+        Self::validate_log_fields(&value)?;
         let config: Self = serde_json::from_value(value).context("容器环境配置格式无效")?;
         config.validate()?;
         Ok(config)
@@ -205,8 +216,14 @@ impl AppConfig {
         if bytes.len() > 1024 * 1024 {
             bail!("配置文件超过 1 MiB");
         }
+        // 仅检查已知日志字段，提供定位而不公开 serde 的原始值或错误链。
+        // 完整配置仍从原字节反序列化，保留重复字段拒绝等既有校验。
+        let value: serde_json::Value =
+            serde_json::from_slice(&bytes).context("配置格式或字段无效")?;
+        Self::validate_log_fields(&value)?;
         let mut config: Self = serde_json::from_slice(&bytes).context("配置格式或字段无效")?;
-        let base = path.parent().unwrap_or(Path::new("."));
+        let absolute = std::path::absolute(path).context("配置文件路径无效")?;
+        let base = absolute.parent().unwrap_or(Path::new("/"));
         for p in [&mut config.data_dir, &mut config.runtime_dir] {
             if p.is_relative() {
                 *p = base.join(&*p);
@@ -228,7 +245,26 @@ impl AppConfig {
         Ok(config)
     }
 
+    fn validate_log_fields(value: &serde_json::Value) -> Result<()> {
+        if let Some(level) = value.get("log_level")
+            && !matches!(level.as_str(), Some("error" | "warn" | "info" | "debug"))
+        {
+            bail!("log_level 必须为 error、warn、info 或 debug");
+        }
+        if let Some(interval) = value.get("log_summary_interval_seconds")
+            && !interval
+                .as_u64()
+                .is_some_and(|seconds| (1..=86400).contains(&seconds))
+        {
+            bail!("log_summary_interval_seconds 必须为 1—86400 秒整数");
+        }
+        Ok(())
+    }
+
     pub fn validate(&self) -> Result<()> {
+        if !(1..=86400).contains(&self.log_summary_interval_seconds) {
+            bail!("log_summary_interval_seconds 必须为 1—86400 秒整数");
+        }
         if self.countries.len() > 256 {
             bail!("countries 最多允许 256 个国家/地区代码");
         }

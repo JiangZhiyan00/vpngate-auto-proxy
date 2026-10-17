@@ -98,14 +98,42 @@ pub async fn run_gateway(
     semaphore: Arc<Semaphore>,
     shutdown: CancellationToken,
 ) -> Result<(), SocksServerError> {
+    let listener = bind_gateway(bind, credentials.as_ref()).await?;
+    serve_gateway(listener, active_worker, credentials, semaphore, shutdown).await
+}
+
+pub async fn bind_gateway(
+    bind: SocketAddr,
+    credentials: Option<&Credentials>,
+) -> Result<TcpListener, SocksServerError> {
     if !bind.ip().is_loopback() && credentials.is_none() {
         return Err(SocksServerError::Bind(io::Error::other(
             "非回环监听必须配置认证",
         )));
     }
-    let listener = TcpListener::bind(bind)
+    TcpListener::bind(bind)
         .await
-        .map_err(SocksServerError::Bind)?;
+        .map_err(SocksServerError::Bind)
+}
+
+pub async fn serve_gateway(
+    listener: TcpListener,
+    active_worker: watch::Receiver<Option<ActiveWorker>>,
+    credentials: Option<Credentials>,
+    semaphore: Arc<Semaphore>,
+    shutdown: CancellationToken,
+) -> Result<(), SocksServerError> {
+    if !listener
+        .local_addr()
+        .map_err(SocksServerError::Bind)?
+        .ip()
+        .is_loopback()
+        && credentials.is_none()
+    {
+        return Err(SocksServerError::Bind(io::Error::other(
+            "非回环监听必须配置认证",
+        )));
+    }
     let mut tasks = JoinSet::new();
     loop {
         tokio::select! {

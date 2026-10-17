@@ -5,8 +5,13 @@ use vpngate_auto_proxy::config::{AppConfig, Credentials, MacOsConfig};
 fn default_and_cross_field_constraints() {
     let mut config = AppConfig::default();
     assert!(config.validate().is_ok());
-    assert!(!config.allow_legacy_vpngate_crypto);
+    assert_eq!(
+        config.allow_legacy_vpngate_crypto,
+        cfg!(target_os = "linux")
+    );
     assert_eq!(config.exit_check_max_attempts, 3);
+    assert_eq!(config.health_interval_seconds, 60);
+    assert_eq!(config.health_timeout_seconds, 5);
     for maximum in [1, 5] {
         config.exit_check_max_attempts = maximum;
         assert!(config.validate().is_ok());
@@ -18,7 +23,15 @@ fn default_and_cross_field_constraints() {
     assert!(config.validate().is_err());
 }
 #[test]
-fn legacy_crypto_requires_explicit_boolean_and_linux_backend() {
+fn legacy_crypto_supports_explicit_strict_mode_and_linux_backend() {
+    let omitted: AppConfig = serde_json::from_str("{}").unwrap();
+    assert_eq!(
+        omitted.allow_legacy_vpngate_crypto,
+        cfg!(target_os = "linux")
+    );
+    let strict: AppConfig =
+        serde_json::from_str(r#"{"allow_legacy_vpngate_crypto":false}"#).unwrap();
+    assert!(!strict.allow_legacy_vpngate_crypto);
     let mut config: AppConfig =
         serde_json::from_str(r#"{"allow_legacy_vpngate_crypto":true}"#).unwrap();
     assert!(config.allow_legacy_vpngate_crypto);
@@ -88,6 +101,7 @@ fn macos_paths_resolve_but_privileged_load_does_not_read_credentials() {
           "runtime_dir":"run",
           "data_dir":"data",
           "credentials_file":"missing-secret.json",
+          "allow_legacy_vpngate_crypto":false,
           "macos":{
             "dependency_manifest":"dependency.json",
             "runtime_parent":"generations",
@@ -117,6 +131,7 @@ fn macos_deployment_requires_non_root_identity_and_normal_absolute_paths() {
     };
     let mut config = AppConfig {
         macos: Some(valid.clone()),
+        allow_legacy_vpngate_crypto: false,
         ..Default::default()
     };
     assert!(config.validate().is_ok());
@@ -207,4 +222,48 @@ fn rejects_partial_empty_or_oversized_credentials_without_echoing_values() {
     )
     .unwrap();
     assert!(Credentials::load(&path).is_ok());
+}
+
+#[test]
+fn log_defaults_and_exact_file_boundaries() {
+    use vpngate_auto_proxy::logging::LogLevel;
+    let old: AppConfig = serde_json::from_str("{}").unwrap();
+    assert_eq!(old.log_level, LogLevel::Info);
+    assert_eq!(old.log_summary_interval_seconds, 60);
+    for level in ["error", "warn", "info", "debug"] {
+        let config: AppConfig =
+            serde_json::from_value(serde_json::json!({"log_level":level})).unwrap();
+        assert!(config.validate().is_ok());
+    }
+    for value in [
+        serde_json::json!(null),
+        serde_json::json!("INFO"),
+        serde_json::json!("trace"),
+        serde_json::json!("off"),
+        serde_json::json!(true),
+    ] {
+        assert!(
+            serde_json::from_value::<AppConfig>(serde_json::json!({"log_level":value})).is_err()
+        );
+    }
+    for value in [
+        serde_json::json!(null),
+        serde_json::json!(true),
+        serde_json::json!(1.5),
+        serde_json::json!(-1),
+    ] {
+        assert!(
+            serde_json::from_value::<AppConfig>(
+                serde_json::json!({"log_summary_interval_seconds":value})
+            )
+            .is_err()
+        );
+    }
+    for interval in [0, 1, 86400, 86401] {
+        let config = AppConfig {
+            log_summary_interval_seconds: interval,
+            ..Default::default()
+        };
+        assert_eq!(config.validate().is_ok(), (1..=86400).contains(&interval));
+    }
 }

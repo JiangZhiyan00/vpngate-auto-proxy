@@ -14,7 +14,7 @@ from cloud_image_identity import archive_identities
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = [
-    "scripts/validate_docker.py", "scripts/validate_soak.py", "scripts/soak_client.py",
+    "scripts/validate_docker.py", "scripts/docker_logging.py", "scripts/validate_soak.py", "scripts/soak_client.py",
     "scripts/verify-license-image.py", "scripts/cloud_image_identity.py", "Cargo.lock",
     "scripts/cloud_deploy.py", "scripts/docker_profiles.py", "scripts/image_program.py",
     "tests/fixtures/setup-docker.sh", "tests/fixtures/setup.sh",

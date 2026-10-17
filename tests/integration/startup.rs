@@ -4,7 +4,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 #[ignore = "需要受控 Linux 节点与网络权限"]
 async fn first_verified_exit_serves_numeric_and_remote_dns_targets_within_sixty_seconds() {
     let _state = FixtureStateGuard::set(serde_json::json!({"source_protocols":["tcp"]}));
-    let mut service = ServiceFixture::start(false, 50);
+    let mut service = ServiceFixture::start_debug(false, 50);
     for target in ["11.54.0.2", "fixture.example"] {
         loop {
             assert!(
@@ -63,7 +63,7 @@ async fn first_verified_exit_serves_numeric_and_remote_dns_targets_within_sixty_
 #[ignore = "需要受控 Linux UDP 节点与网络权限"]
 async fn udp_transport_becomes_usable_after_actual_exit_validation() {
     let _state = FixtureStateGuard::set(serde_json::json!({"source_protocols":["udp"]}));
-    let mut service = ServiceFixture::start(false, 50);
+    let mut service = ServiceFixture::start_debug(false, 50);
     loop {
         assert!(service.started.elapsed() < std::time::Duration::from_secs(60));
         let mut client = service.connect().await;
@@ -79,7 +79,7 @@ async fn udp_transport_becomes_usable_after_actual_exit_validation() {
 #[ignore = "需要受控 Linux 隧道与 HTTP 故障注入"]
 async fn successful_handshake_without_a_working_exit_never_publishes_active_worker() {
     let _state = FixtureStateGuard::set(serde_json::json!({"code":503}));
-    let mut service = ServiceFixture::start(false, 50);
+    let mut service = ServiceFixture::start_debug(false, 50);
     let mut client = service.connect().await;
     assert!(negotiate(&mut client, None).await);
     assert_ne!(request(&mut client, 1, "11.54.0.2", 80).await, 0);
@@ -96,7 +96,7 @@ async fn successful_handshake_without_a_working_exit_never_publishes_active_work
 #[ignore = "需要受控 Linux 节点及真实空闲等待"]
 async fn idle_tunnel_remains_usable_past_server_keepalive_deadline() {
     let _state = FixtureStateGuard::set(serde_json::json!({"source_protocols":["tcp"]}));
-    let mut service = ServiceFixture::start(false, 50);
+    let mut service = ServiceFixture::start_debug(false, 50);
     loop {
         assert!(service.started.elapsed() < std::time::Duration::from_secs(60));
         let mut client = service.connect().await;
@@ -115,4 +115,59 @@ async fn idle_tunnel_remains_usable_past_server_keepalive_deadline() {
         0,
         "空闲超过服务器保活截止后，隧道仍须支持代理端域名解析及访问"
     );
+}
+
+#[tokio::test]
+#[ignore = "需要受控 Linux 节点与网络权限"]
+async fn default_info_reports_one_bound_listener_without_debug_noise() {
+    let _state = FixtureStateGuard::set(serde_json::json!({"source_protocols":["tcp"]}));
+    let mut service = ServiceFixture::start(false, 20);
+    let _client = service.connect().await;
+    assert!(service.started.elapsed() < std::time::Duration::from_secs(5));
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    let events = super::candidates::events(&service);
+    let summaries: Vec<_> = events
+        .iter()
+        .filter(|event| event["event_type"] == "startup_summary")
+        .collect();
+    assert_eq!(summaries.len(), 1);
+    assert_eq!(summaries[0]["config"]["port"], service.config.listen.port());
+    assert_eq!(summaries[0]["config"]["max_connections"], 20);
+    assert_eq!(summaries[0]["ready"], false);
+    assert_eq!(summaries[0]["level"], "info");
+    assert!(!events.iter().any(|event| matches!(
+        event["event_type"].as_str(),
+        Some("runtime_summary" | "candidate_started" | "pending_started")
+    )));
+    super::candidates::wait_event(&service, "active_promoted", 1).await;
+    assert_eq!(
+        super::candidates::events(&service)
+            .iter()
+            .filter(|event| event["event_type"] == "startup_summary")
+            .count(),
+        1
+    );
+}
+
+#[tokio::test]
+#[ignore = "需要专用 Linux 权限及网络预检环境"]
+async fn occupied_port_never_publishes_a_startup_summary() {
+    require_linux();
+    let occupied = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = occupied.local_addr().unwrap();
+    let mut service = ServiceFixture::start_with(false, 20, |config| {
+        config.listen = std::net::SocketAddrV4::new(std::net::Ipv4Addr::LOCALHOST, address.port());
+    });
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    loop {
+        if let Some(status) = service.child.try_wait().unwrap() {
+            assert_eq!(status.code(), Some(1));
+            break;
+        }
+        assert!(std::time::Instant::now() < deadline);
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    let text = std::fs::read_to_string(service.directory.path().join("events.log")).unwrap();
+    assert!(!text.contains("startup_summary"));
+    assert!(!service.config.runtime_dir.exists());
 }

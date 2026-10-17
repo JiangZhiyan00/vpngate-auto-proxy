@@ -104,7 +104,7 @@ pub fn sanitize_openvpn(
     sanitize_openvpn_with_policy(input, expected_ip, false)
 }
 
-/// 仅在部署者明确启用时接受 VPN Gate 的固定旧算法组合。
+/// 根据有效配置策略接受 VPN Gate 的固定旧算法组合；严格模式仍拒绝。
 pub fn sanitize_openvpn_with_policy(
     input: &[u8],
     expected_ip: Ipv4Addr,

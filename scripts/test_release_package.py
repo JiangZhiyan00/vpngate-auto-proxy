@@ -12,6 +12,26 @@ spec.loader.exec_module(package)
 
 
 class ReleasePackageTests(unittest.TestCase):
+    def test_host_materials_bind_actual_image_policy_version_and_commit(self):
+        from package_host_init import package as host_package
+        with tempfile.TemporaryDirectory() as directory:
+            materials = Path(directory) / 'host'
+            manifest = host_package('v1.2.3', 'a' * 40, 'sha256:' + 'b' * 64, materials)
+            labels = {'io.vpngate-auto-proxy.apparmor-sha256': manifest['policy_sha256'],
+                      'org.opencontainers.image.version': 'v1.2.3', 'org.opencontainers.image.revision': 'a' * 40}
+            image = {'Id': manifest['image_id'], 'Config': {'Labels': labels}}
+            self.assertEqual(len(package.host_materials(materials, image)), 3)
+            for key in list(labels):
+                original = labels[key]
+                labels[key] = 'mismatch'
+                with self.assertRaises(ValueError):
+                    package.host_materials(materials, image)
+                labels[key] = original
+            installer = materials / manifest['installer_filename']
+            installer.write_text(installer.read_text() + '# changed\n')
+            with self.assertRaises(ValueError):
+                package.host_materials(materials, image)
+
     def test_cloud_package_contains_local_runtime_imports(self):
         source = Path(__file__).with_name('package-cloud-validation.py')
         description = importlib.util.spec_from_file_location('cloud_package', source)
@@ -34,7 +54,8 @@ class ReleasePackageTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text('original source')
             (root / 'scripts').mkdir()
-            for name in ['tool.py', 'install-vap.py', 'credentials.local.json', 'config.local.json', '.env', 'private.log', 'cache.pyc']:
+            for name in ['tool.py', 'install-vap.py', 'credentials.local.json', 'config.local.json',
+                         'custom.local.json', 'custom.local.yaml', '.env', 'private.log', 'private.log.1', 'cache.pyc']:
                 (root / 'scripts' / name).write_text('local value')
             (root / 'credentials.local.json').write_text('root secret')
             with patch.object(package, 'ROOT', root):
@@ -45,6 +66,9 @@ class ReleasePackageTests(unittest.TestCase):
             self.assertIn('specs/002-rename-cli-vap/contracts/cli.md', files)
             self.assertIn('.env.example', files)
             self.assertNotIn('scripts/.env', files)
+            self.assertNotIn('scripts/custom.local.json', files)
+            self.assertNotIn('scripts/custom.local.yaml', files)
+            self.assertNotIn('scripts/private.log.1', files)
             self.assertFalse(any('credentials.local.json' in name or name.endswith(('.log', '.pyc'))
                                  or ('.env' in name and name != '.env.example') for name in files))
 

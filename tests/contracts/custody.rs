@@ -51,8 +51,22 @@ fn send(channel: &UnixStream, bytes: &[u8], fds: &[BorrowedFd<'_>]) {
     );
 }
 fn assert_closed(peer: &mut UnixStream) {
+    // 并行测试中的短时派生及内核描述符回收可能晚于用户态 close；
+    // 有限等待后仍必须观察 EOF，超时或仍可读数据都不是释放成功。
     peer.set_nonblocking(true).unwrap();
-    assert_eq!(peer.read(&mut [0]).unwrap(), 0, "拒绝交接后仍泄漏描述符");
+    let deadline = std::time::Instant::now() + Duration::from_secs(1);
+    loop {
+        match peer.read(&mut [0]) {
+            Ok(0) => return,
+            Err(error)
+                if error.kind() == io::ErrorKind::WouldBlock
+                    && std::time::Instant::now() < deadline =>
+            {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            result => panic!("拒绝交接后未在预算内关闭连接：{result:?}"),
+        }
+    }
 }
 
 #[tokio::test]

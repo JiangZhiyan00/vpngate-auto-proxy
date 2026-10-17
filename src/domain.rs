@@ -303,6 +303,7 @@ pub enum ServiceState {
 }
 #[derive(Debug, Serialize)]
 pub struct Event {
+    pub level: crate::logging::LogLevel,
     pub timestamp: DateTime<chrono::FixedOffset>,
     pub event_type: String,
     pub node_id: Option<NodeId>,

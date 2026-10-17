@@ -491,6 +491,7 @@ struct Bootstrap {
     uid: u32,
     gid: u32,
     config: AppConfig,
+    listen_scope: crate::logging::ListenScope,
 }
 impl Bootstrap {
     fn validate(&self, authorization: Uuid) -> io::Result<()> {
@@ -728,6 +729,7 @@ async fn handshake(
         uid: request.identity.uid,
         gid: request.identity.gid,
         config: request.config.clone(),
+        listen_scope: request.config.listen_scope,
     };
     send(stream, &bootstrap).await?;
     let identity: Identity = receive(stream).await?;
@@ -940,8 +942,9 @@ async fn child_entry(
     authorization: Uuid,
 ) -> io::Result<()> {
     let bootstrap = tokio::time::timeout(STARTUP, async {
-        let bootstrap: Bootstrap = receive(&mut stream).await?;
+        let mut bootstrap: Bootstrap = receive(&mut stream).await?;
         bootstrap.validate(authorization)?;
+        bootstrap.config.listen_scope = bootstrap.listen_scope;
         let channels = coordinator_request(&bootstrap);
         coordinator::validate(&channels.request)?;
         let observation = deployment::identity(authorization)?;
@@ -1735,6 +1738,7 @@ except OSError: pass
                 runtime_dir: directory.path().join("runtime"),
                 ..Default::default()
             },
+            listen_scope: crate::logging::ListenScope::ProcessLocal,
         };
         let listener_directory = tempfile::tempdir().unwrap();
         let listener = StdListener::bind(listener_directory.path().join("control.sock")).unwrap();

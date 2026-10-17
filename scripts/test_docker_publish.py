@@ -5,6 +5,21 @@ from prepare_docker_publish import validate_release
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_dirty_source_is_rejected_before_freezing_or_building(self):
+        with patch('sys.argv', ['prepare_docker_publish.py', '--tag', 'v1.0.0', '--image', 'example/proxy']), \
+                patch.object(prepare_docker_publish.subprocess, 'check_output', return_value=' M src/service.rs\n'), \
+                patch.object(prepare_docker_publish, 'build_inputs') as freeze, \
+                patch.object(prepare_docker_publish, 'run') as run:
+            with self.assertRaises(RuntimeError):
+                prepare_docker_publish.main()
+            freeze.assert_not_called()
+            run.assert_not_called()
+
+    def test_host_installer_and_policy_are_frozen_inputs(self):
+        frozen = prepare_docker_publish.build_inputs()
+        for name in ('scripts/host-init.py', 'scripts/package_host_init.py', 'deploy/apparmor/vpngate-auto-proxy'):
+            self.assertRegex(frozen[name], r'^[0-9a-f]{64}$')
+
     def test_program_bytes_select_actual_vap_product(self):
         with patch.object(prepare_docker_publish.subprocess, 'check_output', return_value=b'product') as command:
             self.assertEqual(prepare_docker_publish.program_bytes('example/proxy:v1.0.0'), b'product')

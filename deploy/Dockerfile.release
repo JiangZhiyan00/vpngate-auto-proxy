@@ -1,9 +1,13 @@
 ARG RUNTIME_IMAGE=vap-release-base:local
 FROM ${RUNTIME_IMAGE}
 ARG RELEASE_VERSION
+ARG APPARMOR_SHA256
+ARG SOURCE_COMMIT
 COPY LICENSE THIRD_PARTY_NOTICES.md /usr/share/licenses/vpngate-auto-proxy/
 COPY docs/third-party/rust/ /usr/share/licenses/vpngate-auto-proxy/rust/
 COPY docs/third-party/nested/ /usr/share/licenses/vpngate-auto-proxy/nested/
 COPY docs/third-party/runtime/ /usr/share/licenses/vpngate-auto-proxy/runtime/
 LABEL org.opencontainers.image.version="${RELEASE_VERSION}" \
+      org.opencontainers.image.revision="${SOURCE_COMMIT}" \
+      io.vpngate-auto-proxy.apparmor-sha256="${APPARMOR_SHA256}" \
       io.vpngate-auto-proxy.release-scope="docker-linux-amd64"

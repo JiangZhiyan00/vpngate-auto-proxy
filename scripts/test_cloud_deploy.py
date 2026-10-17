@@ -142,13 +142,22 @@ class DeploymentTests(unittest.TestCase):
                 cloud_deploy.check(self.root)
         self.assertEqual(json.loads(report.read_text())['status'], 'failed')
 
-    def test_legacy_crypto_opt_in_is_explicit_boolean(self):
+    def test_legacy_crypto_defaults_on_and_accepts_explicit_boolean(self):
         config = self.root / 'config.json'
         config.write_text(json.dumps({'listen': '0.0.0.0:1080',
                                       'credentials_file': '/run/secrets/proxy_credentials',
                                       'data_dir': '/var/lib/vap', 'runtime_dir': '/run/vap',
                                       'allow_legacy_vpngate_crypto': True}))
         self.assertTrue(cloud_deploy.validate_config(self.root))
+        value = json.loads(config.read_text())
+        del value['allow_legacy_vpngate_crypto']
+        config.write_text(json.dumps(value))
+        self.assertTrue(cloud_deploy.validate_config(self.root))
+        value['allow_legacy_vpngate_crypto'] = False
+        config.write_text(json.dumps(value))
+        self.assertFalse(cloud_deploy.validate_config(self.root))
+        value['allow_legacy_vpngate_crypto'] = True
+        config.write_text(json.dumps(value))
         config.write_text(config.read_text().replace('true', '"true"'))
         with self.assertRaisesRegex(RuntimeError, '布尔值'):
             cloud_deploy.validate_config(self.root)
