@@ -88,9 +88,55 @@ impl Endpoint {
     }
 }
 
+/// 来源指标不是本机实测结果；缺失及非法单项保持未知。
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourceQualityMetrics {
+    #[serde(default, deserialize_with = "quality_integer")]
+    pub score: Option<u64>,
+    #[serde(default, deserialize_with = "quality_positive")]
+    pub speed_bps: Option<u64>,
+    #[serde(default, deserialize_with = "quality_positive")]
+    pub ping_ms: Option<u64>,
+    #[serde(default, deserialize_with = "quality_integer")]
+    pub sessions: Option<u64>,
+    #[serde(default, deserialize_with = "quality_integer")]
+    pub uptime_ms: Option<u64>,
+}
+fn quality_integer<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<u64>, D::Error> {
+    Ok(serde_json::Value::deserialize(deserializer)?.as_u64())
+}
+fn quality_positive<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<u64>, D::Error> {
+    Ok(quality_integer(deserializer)?.filter(|value| *value > 0))
+}
+impl SourceQualityMetrics {
+    pub fn values(self) -> [Option<u64>; 5] {
+        [
+            self.score,
+            self.speed_bps.filter(|v| *v > 0),
+            self.ping_ms.filter(|v| *v > 0),
+            self.sessions,
+            self.uptime_ms,
+        ]
+    }
+    pub fn parse(value: &str, positive: bool) -> Option<u64> {
+        let value = value.trim();
+        if value.is_empty() || !value.bytes().all(|b| b.is_ascii_digit()) {
+            return None;
+        }
+        value.parse::<u64>().ok().filter(|v| !positive || *v > 0)
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct VpnNode {
+    #[serde(default)]
+    pub quality: SourceQualityMetrics,
     pub id: NodeId,
     pub endpoint: Endpoint,
     pub source_hostname: String,

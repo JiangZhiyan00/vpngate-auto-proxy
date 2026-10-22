@@ -9,7 +9,7 @@ use crate::{
     cli::{ActiveNode, Connections, StatusSnapshot},
     config::AppConfig,
     domain::*,
-    scheduler::{Backoff, Catalog, Scheduler},
+    scheduler::{AttemptDisposition, Backoff, Catalog, RoundPurpose, Scheduler},
     service::{self, ActiveCheckSummary},
     socks::ActiveWorker,
     storage::Storage,
@@ -434,6 +434,19 @@ async fn run<C: Rpc, S: Source>(
     source: S,
     stop: CancellationToken,
 ) -> io::Result<()> {
+    let scheduler = Scheduler::new(
+        request.config.candidate_batch_size,
+        request.config.candidate_concurrency,
+    );
+    run_with_scheduler(request, client, source, stop, scheduler).await
+}
+async fn run_with_scheduler<C: Rpc, S: Source>(
+    request: CoordinatorRequest,
+    client: C,
+    source: S,
+    stop: CancellationToken,
+    scheduler: Scheduler,
+) -> io::Result<()> {
     let mut attempts = JoinSet::new();
     let mut sources = JoinSet::new();
     let mut statuses = JoinSet::new();
@@ -445,6 +458,7 @@ async fn run<C: Rpc, S: Source>(
         &mut attempts,
         &mut sources,
         &mut statuses,
+        scheduler,
     )
     .await;
     revoke(&request.active);
@@ -470,9 +484,10 @@ async fn drive<C: Rpc, S: Source>(
     client: &C,
     source: S,
     stop: &CancellationToken,
-    attempts: &mut JoinSet<io::Result<Attempt>>,
+    attempts: &mut JoinSet<(Uuid, io::Result<Attempt>)>,
     sources: &mut JoinSet<Result<SourceSnapshot, String>>,
     statuses: &mut JoinSet<(Option<WorkerId>, io::Result<Response>)>,
+    mut scheduler: Scheduler,
 ) -> io::Result<()> {
     let config = &request.config;
     let storage =
@@ -491,7 +506,10 @@ async fn drive<C: Rpc, S: Source>(
     }
     // 历史诊断仅供观察，不恢复可用性；唯一写入者仍是此协调任务。
     let _ = storage.load_checks();
-    let mut scheduler = Scheduler::new(config.candidate_batch_size, config.candidate_concurrency);
+    scheduler.configure(
+        config.candidate_interval_seconds,
+        config.log_level == crate::logging::LogLevel::Debug,
+    );
     let mut in_flight = BTreeMap::<NodeId, (String, CancellationToken)>::new();
     let gate = Arc::new(Mutex::new(()));
     let mut active: Option<Active> = None;
@@ -506,6 +524,7 @@ async fn drive<C: Rpc, S: Source>(
     let mut next_status = Instant::now();
     let mut round_running = false;
     let mut urgent = false;
+    let mut recovering = false;
     let closed = client.cancellation();
     let mut tick = tokio::time::interval(Duration::from_millis(50));
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
@@ -520,6 +539,7 @@ async fn drive<C: Rpc, S: Source>(
                     let reopen=service::source_adds_usable_nodes(&catalog,&config.selected_source(&snapshot),!service::source_summary(fetched,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired);
                     fetched=Some(snapshot.fetched_at);source_error=None;source_delay.reset();
                     catalog.merge(&config.selected_source(&snapshot),active.as_ref().map(|value|&value.node.id));
+                    scheduler.sync(&catalog,Instant::now()).map_err(io::Error::other)?;
                     for (id,(digest,token)) in &in_flight {if !catalog.nodes.get(id).is_some_and(|node|node.present && node.profile_digest==*digest){token.cancel();}}
                     let _=storage.save_source(&snapshot);
                     next_source=Instant::now()+Duration::from_secs(config.source_refresh_seconds);
@@ -529,27 +549,31 @@ async fn drive<C: Rpc, S: Source>(
                 Err(error)=>{source_error=Some(error);next_source=Instant::now()+Duration::from_secs(source_delay.next_delay());},
             },
             Some(result)=attempts.join_next(),if !attempts.is_empty()=>{
-                let result=result.map_err(|_|io::Error::other("候选协调任务异常"))??;
-                let current=in_flight.remove(&result.node.id).is_some_and(|(_,token)|!token.is_cancelled())
+                let (attempt_id,result)=result.map_err(|_|io::Error::other("候选协调任务异常"))?;
+                let result=result?;
+                let mut current=scheduler.attempt_id(&result.node)==Some(attempt_id) && in_flight.remove(&result.node.id).is_some_and(|(_,token)|!token.is_cancelled())
                     && !service::source_summary(fetched,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired
                     && catalog.nodes.get(&result.node.id).is_some_and(|node|node.present && node.profile_digest==result.node.profile_digest);
-                scheduler.finish(&result.node.id);
                 let latest=result.checks.iter().find(|check|check.layer==Layer::Exit).cloned();
+                if latest.as_ref().is_some_and(|check| check.outcome==Outcome::Succeeded && !check.is_usable_for(&result.node,chrono::Utc::now())) {current=false;}
                 if current {for check in result.checks {if check.outcome==Outcome::Failed {last_error=check.failure_reason.clone();}catalog.record(check);}}
                 if let Some(worker)=result.worker {
                     if current && active.is_none() {
                         let node=catalog.nodes.get(&result.node.id).ok_or_else(||invalid("待提升来源节点缺失"))?.clone();
                         match client.request(Command::Promote {worker,node:Box::new(node.clone())},CONTROL_BUDGET).await? {
                             Response::Promoted {worker:actual,node_id,generation,socket} if actual==worker && node_id==node.id=>{
+                                if !latest.as_ref().is_some_and(|check|check.is_usable_for(&node,chrono::Utc::now())) || service::source_summary(fetched,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired {current=false;retire(client,&gate,worker).await?;} else {
                                 request.active.send_replace(Some(ActiveWorker {socket_path:socket,node_id:node.id.clone(),worker_id:worker,cancel:client.cancellation().child_token()}));
-                                active=Some(Active {node,worker,generation,health_sequence:0});scheduler.continue_with_active();node_delay.reset();urgent=false;last_error=None;next_status=Instant::now();
-                                if let Some(check)=latest {last_check=Some(ActiveCheckSummary {node_id:check.node_id,worker_id:worker,finished_at:check.finished_at,success:true,attempts:check.attempts,elapsed_ms:check.elapsed_ms,status:check.status,failure:None});}
+                                scheduler.continue_with_active(&node);active=Some(Active {node,worker,generation,health_sequence:0});node_delay.reset();urgent=false;recovering=false;last_error=None;next_status=Instant::now();
+                                if let Some(ref check)=latest {last_check=Some(ActiveCheckSummary {node_id:check.node_id.clone(),worker_id:worker,finished_at:check.finished_at,success:true,attempts:check.attempts,elapsed_ms:check.elapsed_ms,status:check.status,failure:None});}
+                            }
                             },
                             Response::Error {..}=>{retire(client,&gate,worker).await?;last_error=Some("活动提升失败，所属代际已退休".into());},
                             _=>return Err(io::Error::other("活动提升响应归属或类型不符")),
                         }
                     } else {retire(client,&gate,worker).await?;}
                 }
+                scheduler.complete(&result.node,attempt_id,if !current {AttemptDisposition::Invalidated}else if latest.as_ref().is_some_and(|c|c.outcome==Outcome::Succeeded){AttemptDisposition::Succeeded}else{AttemptDisposition::Failed},chrono::Utc::now(),Instant::now());
                 persist(config, &storage,&catalog,active.as_ref().map(|value|&value.node.id));
             },
             Some(result)=statuses.join_next(),if !statuses.is_empty()=>{
@@ -581,7 +605,7 @@ async fn drive<C: Rpc, S: Source>(
                     }
                     if failed {
                         revoke(&request.active);last_switch=Some("活动代际或出口检测失效".into());last_error=last_switch.clone();
-                        scheduler.cancel_queued();for (_,token) in in_flight.values(){token.cancel();}
+                        scheduler.cancel_queued();scheduler.active_failure(&current.node,chrono::Utc::now(),Instant::now());recovering=true;for (_,token) in in_flight.values(){token.cancel();}
                         retire(client,&gate,worker).await?;active=None;urgent=true;next_round=Instant::now();
                     }
                     persist(config, &storage,&catalog,active.as_ref().map(|value|&value.node.id));
@@ -616,20 +640,32 @@ async fn drive<C: Rpc, S: Source>(
                 });
         }
         if now >= next_round && !scheduler.is_running() && fresh {
-            if active.is_none() {
-                scheduler.begin_recovery(&catalog, wall);
+            let purpose = if active.is_some() {
+                RoundPurpose::Background
+            } else if recovering {
+                RoundPurpose::Recovery
             } else {
-                scheduler.begin(&catalog, active.as_ref().map(|value| &value.node.id));
-            }
+                RoundPurpose::Initial
+            };
+            scheduler
+                .begin_at(
+                    &catalog,
+                    active.as_ref().map(|value| &value.node.id),
+                    purpose,
+                    wall,
+                    now,
+                )
+                .map_err(io::Error::other)?;
             round_running = scheduler.is_running();
             urgent = false;
             if !round_running {
-                next_round = now
-                    + Duration::from_secs(if active.is_some() {
-                        config.candidate_interval_seconds
-                    } else {
-                        node_delay.next_delay()
-                    });
+                next_round = if active.is_none() {
+                    scheduler
+                        .earliest_ready(&catalog, now)
+                        .unwrap_or_else(|| now + Duration::from_secs(node_delay.next_delay()))
+                } else {
+                    now + Duration::from_secs(config.candidate_interval_seconds)
+                };
             }
         }
         if fresh
@@ -658,26 +694,38 @@ async fn drive<C: Rpc, S: Source>(
         }
         if fresh {
             while let Some(node) = scheduler.next(&mut catalog, wall) {
+                let attempt_id = scheduler.attempt_id(&node).expect("在途任务具有尝试标识");
                 catalog.start_attempt(&node, wall);
                 let token = stop.child_token();
                 in_flight.insert(
                     node.id.clone(),
                     (node.profile_digest.clone(), token.clone()),
                 );
-                attempts.spawn(attempt(
+                let future = attempt(
                     config.clone(),
                     client.clone(),
                     node,
                     active.is_none(),
                     gate.clone(),
                     token,
-                ));
+                );
+                attempts.spawn(async move { (attempt_id, future.await) });
             }
         } else {
+            scheduler.cancel_queued_with_reason(crate::scheduler::SelectionReason::SourceExpired);
             for (_, token) in in_flight.values() {
                 token.cancel();
             }
         }
+        crate::logging::selection_events(
+            config,
+            &mut scheduler,
+            if active.is_some() {
+                ServiceState::Ready
+            } else {
+                ServiceState::Validating
+            },
+        );
         let next = chrono::Duration::from_std(next_round.saturating_duration_since(now))
             .ok()
             .and_then(|delta| wall.checked_add_signed(delta))
@@ -734,10 +782,14 @@ mod tests {
         finished: HashMap<WorkerId, chrono::DateTime<chrono::Utc>>,
         failed: HashSet<WorkerId>,
         hold_checks: bool,
+        hold_node: Option<NodeId>,
+        fail_nodes: HashSet<NodeId>,
+        started_nodes: Vec<NodeId>,
         hold_ready: bool,
         fail_checks: bool,
         bad_health: bool,
         retire_error: bool,
+        promotion_delay: Duration,
         starts: Vec<Instant>,
         retires: Vec<Instant>,
         maximum: usize,
@@ -759,6 +811,7 @@ mod tests {
             Ok(match command {
                 Command::Start { node } => {
                     let worker = WorkerId::default();
+                    state.started_nodes.push(node.id.clone());
                     state.workers.insert(worker, (*node, Uuid::new_v4()));
                     state.starts.push(Instant::now());
                     state.maximum = state.maximum.max(state.workers.len());
@@ -785,11 +838,14 @@ mod tests {
                     Response::CheckStarted { worker }
                 }
                 Command::VerifyResult { worker } => {
-                    if state.hold_checks && state.active.is_some() {
+                    if (state.hold_checks && state.active.is_some())
+                        || state.hold_node.as_ref() == Some(&state.workers[&worker].0.id)
+                    {
                         Response::Checking { worker }
                     } else {
                         state.checks.remove(&worker);
-                        let success = !state.fail_checks;
+                        let success = !state.fail_checks
+                            && !state.fail_nodes.contains(&state.workers[&worker].0.id);
                         Response::Verified {
                             worker,
                             finished_at: state.finished[&worker],
@@ -804,6 +860,10 @@ mod tests {
                     }
                 }
                 Command::Promote { worker, node } => {
+                    let delay = state.promotion_delay;
+                    drop(state);
+                    tokio::time::sleep(delay).await;
+                    let mut state = self.state.lock().await;
                     state.active = Some(worker);
                     Response::Promoted {
                         worker,
@@ -880,6 +940,7 @@ mod tests {
                 transport: profile.transport(),
             };
             nodes.push(VpnNode {
+                quality: Default::default(),
                 id: NodeId::from_endpoint(&endpoint),
                 endpoint,
                 source_hostname: String::new(),
@@ -971,6 +1032,214 @@ mod tests {
         panic!("受控协调未提升活动出口")
     }
     #[tokio::test(start_paused = true)]
+    async fn active_old_profile_keeps_cooldown_when_source_changes_then_switches_back() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut request = request(directory.path());
+        request.config.candidate_interval_seconds = 900;
+        let active = request.active.clone();
+        let rpc = FakeRpc::default();
+        let original = snapshot(1);
+        let source = FakeSource(Arc::new(Mutex::new(Ok(original.clone()))));
+        let stop = CancellationToken::new();
+        let task = tokio::spawn(run(request, rpc.clone(), source.clone(), stop.clone()));
+        let old = ready(&active).await;
+        let mut changed = original.clone();
+        changed.nodes[0].profile = changed.nodes[0].profile.replace("CA", "OTHER_CA");
+        changed.nodes[0].profile_digest = blake3::hash(changed.nodes[0].profile.as_bytes())
+            .to_hex()
+            .to_string();
+        *source.0.lock().await = Ok(changed);
+        for _ in 0..40 {
+            step().await;
+        }
+        {
+            let mut state = rpc.state.lock().await;
+            state.fail_checks = true;
+            state.failed.insert(old.worker_id);
+        }
+        for _ in 0..100 {
+            if old.cancel.is_cancelled() {
+                break;
+            }
+            step().await;
+        }
+        assert!(old.cancel.is_cancelled());
+        *source.0.lock().await = Ok(original);
+        rpc.state.lock().await.fail_checks = false;
+        for _ in 0..60 {
+            step().await;
+        }
+        assert!(
+            active.borrow().is_none(),
+            "切回旧活动配置不能清除其故障冷却"
+        );
+        tokio::time::advance(Duration::from_secs(30)).await;
+        assert_ne!(ready(&active).await.worker_id, old.worker_id);
+        stop.cancel();
+        task.await.unwrap().unwrap();
+    }
+    #[tokio::test(start_paused = true)]
+    async fn recovery_history_capacity_failure_revokes_reference_and_closes_control() {
+        let directory = tempfile::tempdir().unwrap();
+        let request = request(directory.path());
+        let active = request.active.clone();
+        let status = request.status.clone();
+        let rpc = FakeRpc::default();
+        let source = FakeSource(Arc::new(Mutex::new(Ok(snapshot(1)))));
+        let mut scheduler = Scheduler::new(2, 2);
+        // 使用相同超限分支的小容量注入，四万实际边界由共享契约验证。
+        scheduler.limit_capacity_for_test(3);
+        let stop = CancellationToken::new();
+        let task = tokio::spawn(run_with_scheduler(
+            request,
+            rpc.clone(),
+            source.clone(),
+            stop,
+            scheduler,
+        ));
+        let old = ready(&active).await;
+        rpc.state.lock().await.failed.insert(old.worker_id);
+        for _ in 0..100 {
+            if old.cancel.is_cancelled() {
+                break;
+            }
+            step().await;
+        }
+        assert!(old.cancel.is_cancelled());
+        let mut next = snapshot(4);
+        next.nodes.remove(0);
+        *source.0.lock().await = Ok(next);
+        for _ in 0..100 {
+            if task.is_finished() {
+                break;
+            }
+            step().await;
+        }
+        assert!(task.is_finished());
+        assert!(
+            task.await
+                .unwrap()
+                .unwrap_err()
+                .to_string()
+                .starts_with("history_capacity_exceeded")
+        );
+        assert!(active.borrow().is_none());
+        assert!(!status.borrow().ready);
+        assert!(rpc.closed.is_cancelled());
+    }
+    #[tokio::test]
+    async fn expired_during_promotion_is_retired_without_publication() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut request = request(directory.path());
+        request.config.candidate_result_ttl_seconds = 1;
+        let active = request.active.clone();
+        let rpc = FakeRpc::default();
+        rpc.state.lock().await.promotion_delay = Duration::from_millis(1100);
+        let stop = CancellationToken::new();
+        let task = tokio::spawn(run(
+            request,
+            rpc.clone(),
+            FakeSource(Arc::new(Mutex::new(Ok(snapshot(1))))),
+            stop.clone(),
+        ));
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                assert!(active.borrow().is_none(), "过期结果不得发布活动出口");
+                if !rpc.state.lock().await.retires.is_empty() {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        stop.cancel();
+        task.await.unwrap().unwrap();
+        assert!(rpc.state.lock().await.workers.is_empty());
+    }
+    #[tokio::test(start_paused = true)]
+    async fn initial_second_ranked_success_wins_without_waiting_for_first() {
+        let directory = tempfile::tempdir().unwrap();
+        let request = request(directory.path());
+        let active = request.active.clone();
+        let rpc = FakeRpc::default();
+        let mut input = snapshot(2);
+        input.nodes[0].quality.score = Some(200);
+        input.nodes[1].quality.score = Some(100);
+        rpc.state.lock().await.hold_node = Some(input.nodes[0].id.clone());
+        let expected = input.nodes[1].id.clone();
+        let stop = CancellationToken::new();
+        let task = tokio::spawn(run(
+            request,
+            rpc.clone(),
+            FakeSource(Arc::new(Mutex::new(Ok(input)))),
+            stop.clone(),
+        ));
+        let winner = ready(&active).await;
+        assert_eq!(winner.node_id, expected);
+        assert_eq!(rpc.state.lock().await.starts.len(), 2);
+        assert_eq!(rpc.state.lock().await.maximum, 2);
+        rpc.state.lock().await.hold_node = None;
+        for _ in 0..20 {
+            step().await;
+        }
+        assert_eq!(
+            active.borrow().as_ref().unwrap().worker_id,
+            winner.worker_id
+        );
+        stop.cancel();
+        task.await.unwrap().unwrap();
+        assert!(rpc.closed.is_cancelled());
+        assert!(active.borrow().is_none());
+    }
+    #[tokio::test(start_paused = true)]
+    async fn recovery_search_covers_twenty_failed_nodes_before_twenty_first() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut request = request(directory.path());
+        request.config.candidate_batch_size = 20;
+        request.config.candidate_interval_seconds = 900;
+        let active = request.active.clone();
+        let rpc = FakeRpc::default();
+        let source = FakeSource(Arc::new(Mutex::new(Ok(snapshot(1)))));
+        let stop = CancellationToken::new();
+        let task = tokio::spawn(run(request, rpc.clone(), source.clone(), stop.clone()));
+        let old = ready(&active).await;
+        let mut input = snapshot(22);
+        input.nodes.remove(0);
+        let expected = input.nodes[20].id.clone();
+        for (index, node) in input.nodes.iter_mut().enumerate() {
+            node.quality.score = Some((100 - index) as u64);
+        }
+        rpc.state.lock().await.fail_nodes =
+            input.nodes[..20].iter().map(|n| n.id.clone()).collect();
+        *source.0.lock().await = Ok(input);
+        for _ in 0..30 {
+            step().await;
+        }
+        rpc.state.lock().await.failed.insert(old.worker_id);
+        for _ in 0..500 {
+            if active
+                .borrow()
+                .as_ref()
+                .is_some_and(|new| new.node_id == expected)
+            {
+                break;
+            }
+            step().await;
+        }
+        assert!(old.cancel.is_cancelled());
+        assert_eq!(active.borrow().as_ref().unwrap().node_id, expected);
+        let state = rpc.state.lock().await;
+        let recovery = &state.started_nodes[1..];
+        assert_eq!(recovery.len(), 21);
+        assert_eq!(recovery.iter().collect::<HashSet<_>>().len(), 21);
+        drop(state);
+        stop.cancel();
+        task.await.unwrap().unwrap();
+        assert!(rpc.closed.is_cancelled());
+        assert!(active.borrow().is_none());
+    }
+    #[tokio::test(start_paused = true)]
     async fn background_candidates_are_parallel_retired_and_do_not_rotate_healthy_activity() {
         let directory = tempfile::tempdir().unwrap();
         let mut request = request(directory.path());
@@ -978,11 +1247,20 @@ mod tests {
         let active = request.active.clone();
         let status = request.status.clone();
         let rpc = FakeRpc::default();
-        rpc.state.lock().await.hold_checks = true;
         let source = FakeSource(Arc::new(Mutex::new(Ok(snapshot(3)))));
         let stop = CancellationToken::new();
-        let task = tokio::spawn(run(request, rpc.clone(), source, stop.clone()));
+        let task = tokio::spawn(run(request, rpc.clone(), source.clone(), stop.clone()));
         let old = ready(&active).await;
+        // 首次两个待启用任务可以同时成功，先等原轮剩余任务回收，再观察完整后台轮。
+        for _ in 0..100 {
+            let state = rpc.state.lock().await;
+            if state.starts.len() >= 3 && state.workers.len() == 1 {
+                break;
+            }
+            drop(state);
+            step().await;
+        }
+        rpc.state.lock().await.hold_checks = true;
         for _ in 0..100 {
             if rpc.state.lock().await.checks.len() == 2 {
                 break;
@@ -1001,6 +1279,28 @@ mod tests {
             step().await;
         }
         assert_eq!(rpc.state.lock().await.workers.len(), 1);
+        for round in 0..10 {
+            if let Ok(snapshot) = &mut *source.0.lock().await {
+                for (index, node) in snapshot.nodes.iter_mut().enumerate() {
+                    node.quality.score = Some(((round + index) % 3) as u64);
+                }
+            }
+            let previous = rpc.state.lock().await.starts.len();
+            tokio::time::advance(Duration::from_secs(2)).await;
+            for _ in 0..100 {
+                let state = rpc.state.lock().await;
+                if state.starts.len() >= previous + 2 && state.workers.len() == 1 {
+                    break;
+                }
+                drop(state);
+                step().await;
+            }
+            let state = rpc.state.lock().await;
+            assert!(state.starts.len() >= previous + 2);
+            assert_eq!(state.workers.len(), 1);
+            assert_eq!(active.borrow().as_ref().unwrap().worker_id, old.worker_id);
+            assert!(!old.cancel.is_cancelled());
+        }
         assert!(status.borrow().ready);
         assert_eq!(active.borrow().as_ref().unwrap().worker_id, old.worker_id);
         stop.cancel();
@@ -1071,7 +1371,7 @@ mod tests {
             FakeSource(Arc::new(Mutex::new(Ok(snapshot(1))))),
             stop.clone(),
         ));
-        for _ in 0..100 {
+        for _ in 0..800 {
             if rpc.state.lock().await.starts.len() >= 2 {
                 break;
             }
@@ -1079,7 +1379,7 @@ mod tests {
         }
         let state = rpc.state.lock().await;
         assert!(state.starts.len() >= 2);
-        assert!(state.starts[1].duration_since(state.retires[0]) >= Duration::from_secs(2));
+        assert!(state.starts[1].duration_since(state.retires[0]) >= Duration::from_secs(30));
         drop(state);
         stop.cancel();
         task.await.unwrap().unwrap();
@@ -1134,6 +1434,8 @@ mod tests {
             step().await;
         }
         assert!(old.cancel.is_cancelled());
+        assert!(active.borrow().is_none());
+        tokio::time::advance(Duration::from_secs(30)).await;
         let new = ready(&active).await;
         assert_ne!(new.worker_id, old.worker_id);
         assert!(rpc.state.lock().await.starts.len() >= 2);

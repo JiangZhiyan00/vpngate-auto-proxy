@@ -5,7 +5,7 @@ use crate::{
     logging::{self, EventKind, LogLevel, LogPolicy, SummaryClock},
     netd::{self, InstanceLock, protocol::*, system::*, workers::WorkerManager},
     probe,
-    scheduler::{Backoff, Catalog, Scheduler},
+    scheduler::{AttemptDisposition, Backoff, Catalog, RoundPurpose, Scheduler},
     socks::{self, ActiveWorker},
     storage::Storage,
     vpngate,
@@ -718,6 +718,10 @@ async fn control_loop(
         );
     }
     let mut scheduler = Scheduler::new(config.candidate_batch_size, config.candidate_concurrency);
+    scheduler.configure(
+        config.candidate_interval_seconds,
+        config.log_level == LogLevel::Debug,
+    );
     let mut attempts = tokio::task::JoinSet::new();
     let mut in_flight = std::collections::BTreeMap::<NodeId, (String, CancellationToken)>::new();
     let mut source_tasks =
@@ -788,6 +792,7 @@ async fn control_loop(
                         source_error=None;source_delay.reset();fetched_at=Some(snapshot.fetched_at);
                         let active_id=active.borrow().as_ref().map(|a|a.node_id.clone());
                         catalog.merge(&config.selected_source(&snapshot),active_id.as_ref());
+                        scheduler.sync(&catalog, Instant::now())?;
                         for (id,(digest,token)) in &in_flight {
                             if !catalog.nodes.get(id).is_some_and(|n|n.present && &n.profile_digest==digest) {token.cancel();}
                         }
@@ -806,24 +811,32 @@ async fn control_loop(
                 }
             },
             Some(value)=attempts.join_next(),if !attempts.is_empty()=>{
-                let result:AttemptResult=value.context("节点验证任务退出失败")??;
-                let cancelled=in_flight.remove(&result.node.id).is_none_or(|(_,token)|token.is_cancelled());scheduler.finish(&result.node.id);
-                let current=!cancelled && !source_summary(fetched_at,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired && catalog.nodes.get(&result.node.id).is_some_and(|n|n.present && n.profile_digest==result.node.profile_digest);
+                let (attempt_id,result)=value.context("节点验证任务退出失败")?;
+                let result:AttemptResult=result?;
+                let cancelled=scheduler.attempt_id(&result.node)!=Some(attempt_id) || in_flight.remove(&result.node.id).is_none_or(|(_,token)|token.is_cancelled());
+                let mut current=!cancelled && !source_summary(fetched_at,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired && catalog.nodes.get(&result.node.id).is_some_and(|n|n.present && n.profile_digest==result.node.profile_digest);
                 let last_exit=result.checks.iter().find(|check|check.layer==Layer::Exit).cloned();
+                if last_exit.as_ref().is_some_and(|check| check.outcome==Outcome::Succeeded && !check.is_usable_for(&result.node,chrono::Utc::now())) {current=false;}
                 if current {for check in result.checks {if check.outcome==Outcome::Failed {last_error=check.failure_reason.clone();}catalog.record(check);}}
                 if let Some(socket)=result.socket {
                     if current && active.borrow().is_none() {
                         ensure!(matches!(client.request(NetdRequest::PromoteWorker {instance_id:client.instance_id,worker_id:result.worker},Duration::from_secs(5)).await?,NetdResponse::Pong),"活动出口提升失败");
+                        if !last_exit.as_ref().is_some_and(|check|check.is_usable_for(&result.node,chrono::Utc::now())) || source_summary(fetched_at,chrono::Utc::now(),Duration::from_secs(config.source_cache_ttl_seconds),None).expired {
+                            current=false;
+                            stop_worker(client,result.worker).await?;
+                        } else {
                         active.send_replace(Some(ActiveWorker {socket_path:socket,node_id:result.node.id.clone(),worker_id:result.worker,cancel:cancel.child_token()}));
                         active_node=Some(result.node.clone());activity.ready=true;
                         last_error=None;
-                        if let Some(check)=last_exit {activity.last_check=Some(ActiveCheckSummary {node_id:check.node_id,worker_id:result.worker,finished_at:check.finished_at,success:check.outcome==Outcome::Succeeded,attempts:check.attempts,elapsed_ms:check.elapsed_ms,status:check.status,failure:check.failure_reason});}
-                        recovering=false;node_delay.reset();
+                        if let Some(ref check)=last_exit {activity.last_check=Some(ActiveCheckSummary {node_id:check.node_id.clone(),worker_id:result.worker,finished_at:check.finished_at,success:check.outcome==Outcome::Succeeded,attempts:check.attempts,elapsed_ms:check.elapsed_ms,status:check.status,failure:check.failure_reason.clone()});}
+                        recovering=false;scheduler.continue_with_active(&result.node);node_delay.reset();
                         next_structure=Instant::now()+Duration::from_secs(1);
                         next_health=Instant::now()+Duration::from_secs(config.health_interval_seconds);
                         emit(config,EventKind::ActivePromoted,ServiceState::Ready,Some(result.node.id.clone()),Some(result.worker),None,Duration::ZERO);
+                        }
                     } else {stop_worker(client,result.worker).await?;}
                 }
+                scheduler.complete(&result.node,attempt_id, if !current {AttemptDisposition::Invalidated} else if last_exit.as_ref().is_some_and(|c|c.outcome==Outcome::Succeeded){AttemptDisposition::Succeeded}else{AttemptDisposition::Failed}, chrono::Utc::now(), Instant::now());
                 let active_id=active.borrow().as_ref().map(|a|a.node_id.clone());
                 persist_checks(config, &storage,&catalog,active_id.as_ref());
                 emit(config,EventKind::CandidateResult,if active_id.is_some(){ServiceState::Ready}else{ServiceState::Validating},Some(result.node.id),Some(result.worker),None,Duration::ZERO);
@@ -850,6 +863,9 @@ async fn control_loop(
                 token.cancel();
             }
             scheduler.cancel_queued();
+            if let Some(node) = &active_node {
+                scheduler.active_failure(node, chrono::Utc::now(), Instant::now());
+            }
             round_was_running = false;
             recovering = true;
             structures.shutdown().await;
@@ -916,11 +932,14 @@ async fn control_loop(
         }
         if now >= next_round && !scheduler.is_running() && fresh {
             let active_id = active.borrow().as_ref().map(|a| a.node_id.clone());
-            if recovering {
-                scheduler.begin_recovery(&catalog, wall);
+            let purpose = if active_id.is_some() {
+                RoundPurpose::Background
+            } else if recovering {
+                RoundPurpose::Recovery
             } else {
-                scheduler.begin(&catalog, active_id.as_ref());
-            }
+                RoundPurpose::Initial
+            };
+            scheduler.begin_at(&catalog, active_id.as_ref(), purpose, wall, now)?;
             round_was_running = scheduler.is_running();
             emit(
                 config,
@@ -936,12 +955,13 @@ async fn control_loop(
                 Duration::ZERO,
             );
             if !round_was_running {
-                next_round = now
-                    + Duration::from_secs(if active_id.is_some() {
-                        config.candidate_interval_seconds
-                    } else {
-                        node_delay.next_delay()
-                    });
+                next_round = if active_id.is_none() {
+                    scheduler
+                        .earliest_ready(&catalog, now)
+                        .unwrap_or_else(|| now + Duration::from_secs(node_delay.next_delay()))
+                } else {
+                    now + Duration::from_secs(config.candidate_interval_seconds)
+                };
             }
         }
         // 成功的空来源按无可用节点退避恢复；来源失败仍使用独立的失败退避。
@@ -1047,6 +1067,7 @@ async fn control_loop(
         });
         if fresh {
             while let Some(node) = scheduler.next(&mut catalog, wall) {
+                let attempt_id = scheduler.attempt_id(&node).expect("在途任务具有尝试标识");
                 catalog.start_attempt(&node, wall);
                 let id = WorkerId::default();
                 let token = cancel.child_token();
@@ -1059,14 +1080,8 @@ async fn control_loop(
                 } else {
                     WorkerRole::Pending
                 };
-                attempts.spawn(attempt_node(
-                    config.clone(),
-                    client.clone(),
-                    node,
-                    id,
-                    role,
-                    token,
-                ));
+                let future = attempt_node(config.clone(), client.clone(), node, id, role, token);
+                attempts.spawn(async move { (attempt_id, future.await) });
             }
         } else {
             // 缓存到期不关闭健康活动，但不得继续启动过期来源的节点。
@@ -1074,6 +1089,15 @@ async fn control_loop(
                 token.cancel();
             }
         }
+        logging::selection_events(
+            config,
+            &mut scheduler,
+            if activity.ready {
+                ServiceState::Ready
+            } else {
+                ServiceState::Validating
+            },
+        );
     }
 }
 fn persist_checks(

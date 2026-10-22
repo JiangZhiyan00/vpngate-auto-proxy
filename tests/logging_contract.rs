@@ -22,6 +22,14 @@ fn four_levels_filter_the_same_sequence() {
     }
     assert_eq!(EventKind::RuntimeSummary.level(), LogLevel::Debug);
     assert_eq!(EventKind::CandidateStarted.level(), LogLevel::Debug);
+    for kind in [
+        EventKind::SelectionAssessed,
+        EventKind::SelectionDispatched,
+        EventKind::SelectionSkipped,
+    ] {
+        assert_eq!(kind.level(), LogLevel::Debug);
+        assert!(!LogPolicy::new(LogLevel::Info, 60).allows(kind.level()));
+    }
     assert_eq!(EventKind::SourceFailed.level(), LogLevel::Warn);
     assert_eq!(EventKind::ActivePromoted.level(), LogLevel::Info);
     assert_eq!(EventKind::RuntimeFailed.level(), LogLevel::Error);

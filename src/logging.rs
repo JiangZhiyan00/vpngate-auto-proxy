@@ -170,6 +170,9 @@ kinds! {
     CacheWriteFailed => ("cache_write_failed", Warn),
     DiagnosticsWriteFailed => ("diagnostics_write_failed", Warn),
     RuntimeFailed => ("runtime_failed", Error),
+    SelectionAssessed => ("selection_assessed", Debug),
+    SelectionDispatched => ("selection_dispatched", Debug),
+    SelectionSkipped => ("selection_skipped", Debug),
     SourceFetch => ("source_fetch", Debug),
     SourceUpdated => ("source_updated", Debug),
     CacheLoaded => ("cache_loaded", Debug),
@@ -203,6 +206,7 @@ pub fn safe_reason(kind: EventKind, value: Option<&str>) -> Option<String> {
         "出口检测连接失败",
         "出口检测全部失败",
         "当前无已验证出口，等待节点",
+        "history_capacity_exceeded：节点历史容量不足，停止新派发并回收资源",
         "服务已开始监听，等待已验证出口",
     ];
     if SAFE.contains(&reason) {
@@ -447,9 +451,246 @@ pub async fn flush(budget: Duration) {
     }
 }
 
+/// 固定类型的单节点选择说明；不包含配置正文或自由远端文本。
+pub struct SelectionDiagnostic {
+    pub event_type: EventKind,
+    pub level: LogLevel,
+    pub timestamp: chrono::DateTime<chrono::FixedOffset>,
+    pub state: ServiceState,
+    pub policy_version: u32,
+    pub weights: [u64; 5],
+    pub selection: crate::scheduler::SelectionRecord,
+}
+impl serde::Serialize for SelectionDiagnostic {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // 时间统一服从配置时区；仅转换固定类型结构的已知时间路径。
+        let mut selection =
+            serde_json::to_value(&self.selection).map_err(serde::ser::Error::custom)?;
+        selection["reason_text"] =
+            serde_json::Value::String(self.selection.reason.description().into());
+        selection["earliest_eligible_at"] =
+            serde_json::to_value(self.selection.cooldown_at).map_err(serde::ser::Error::custom)?;
+        let fields = ["score", "speed_bps", "ping_ms", "sessions", "uptime_ms"];
+        selection["assessment"]["unknown_metrics"] = serde_json::json!(
+            self.selection
+                .assessment
+                .metrics
+                .values()
+                .iter()
+                .zip(fields)
+                .filter_map(|(value, name)| value.is_none().then_some(name))
+                .collect::<Vec<_>>()
+        );
+        for path in [
+            "/recent_success_at",
+            "/cooldown_at",
+            "/earliest_eligible_at",
+            "/assessment/source_fetched_at",
+            "/assessment/last_attempt_at",
+        ] {
+            if let Some(value) = selection.pointer_mut(path)
+                && let Some(raw) = value.as_str()
+            {
+                let time =
+                    chrono::DateTime::parse_from_rfc3339(raw).map_err(serde::ser::Error::custom)?;
+                *value = serde_json::Value::String(
+                    time.with_timezone(self.timestamp.offset()).to_rfc3339(),
+                );
+            }
+        }
+        #[derive(Serialize)]
+        struct Encoded<'a> {
+            event_type: EventKind,
+            level: LogLevel,
+            timestamp: chrono::DateTime<chrono::FixedOffset>,
+            state: ServiceState,
+            node_id: &'a NodeId,
+            worker_id: Option<uuid::Uuid>,
+            policy_version: u32,
+            weights: [u64; 5],
+            selection: serde_json::Value,
+        }
+        Encoded {
+            event_type: self.event_type,
+            level: self.level,
+            timestamp: self.timestamp,
+            state: self.state,
+            node_id: &self.selection.assessment.node_id,
+            worker_id: None,
+            policy_version: self.policy_version,
+            weights: self.weights,
+            selection,
+        }
+        .serialize(serializer)
+    }
+}
+struct SelectionBatch {
+    records: Vec<crate::scheduler::SelectionRecord>,
+    timezone: chrono_tz::Tz,
+    state: ServiceState,
+}
+struct SelectionSink {
+    sender: mpsc::SyncSender<SelectionBatch>,
+}
+impl SelectionSink {
+    fn new(mut submit: impl FnMut(Line) + Send + 'static) -> Self {
+        // 一批待编码、一批编码中；不持有协调器或任何工作槽租约。
+        let (sender, receiver) = mpsc::sync_channel::<SelectionBatch>(1);
+        let _ = std::thread::Builder::new()
+            .name("vap-selection-log".into())
+            .spawn(move || {
+                while let Ok(batch) = receiver.recv() {
+                    for selection in batch.records {
+                        let kind = match selection.kind {
+                            crate::scheduler::SelectionKind::Assessed => {
+                                EventKind::SelectionAssessed
+                            }
+                            crate::scheduler::SelectionKind::Dispatched => {
+                                EventKind::SelectionDispatched
+                            }
+                            crate::scheduler::SelectionKind::Skipped => EventKind::SelectionSkipped,
+                        };
+                        let event = SelectionDiagnostic {
+                            event_type: kind,
+                            level: LogLevel::Debug,
+                            timestamp: chrono::Utc::now()
+                                .with_timezone(&batch.timezone)
+                                .fixed_offset(),
+                            state: batch.state,
+                            policy_version: 1,
+                            weights: crate::quality::WEIGHTS,
+                            selection,
+                        };
+                        if let Ok(text) = serde_json::to_string(&event)
+                            && text.len() <= 1_048_576
+                        {
+                            submit(Line {
+                                text,
+                                kind,
+                                selected: LogLevel::Debug,
+                                timestamp: event.timestamp.to_rfc3339(),
+                            });
+                        }
+                    }
+                }
+            });
+        Self { sender }
+    }
+    fn submit(&self, batch: SelectionBatch) {
+        if let Err(error) = self.sender.try_send(batch) {
+            let count = match error {
+                mpsc::TrySendError::Full(batch) | mpsc::TrySendError::Disconnected(batch) => {
+                    batch.records.len() as u64
+                }
+            };
+            if let Some(sink) = SINK.get() {
+                let _ = sink.losses[LogLevel::Debug as usize].fetch_update(
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                    |old| Some(old.saturating_add(count)),
+                );
+            }
+        }
+    }
+}
+static SELECTION_SINK: OnceLock<SelectionSink> = OnceLock::new();
+pub fn selection_events(
+    config: &AppConfig,
+    scheduler: &mut crate::scheduler::Scheduler,
+    state: ServiceState,
+) {
+    let records = scheduler.take_diagnostics();
+    if records.is_empty() || !LogPolicy::from(config).allows(LogLevel::Debug) {
+        return;
+    }
+    let sink = SINK.get_or_init(Sink::new);
+    SELECTION_SINK
+        .get_or_init(|| SelectionSink::new(move |line| sink.submit(line)))
+        .submit(SelectionBatch {
+            records,
+            timezone: config.timezone,
+            state,
+        });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test(flavor = "current_thread")]
+    async fn typed_maximum_selection_batch_does_not_wait_for_blocked_output() {
+        use crate::scheduler::{Catalog, RoundPurpose, Scheduler};
+        let wall = chrono::Utc::now();
+        let mut catalog = Catalog::default();
+        for index in 0..20_000_u32 {
+            let endpoint = Endpoint {
+                ip: std::net::Ipv4Addr::from(0x0b000001 + index),
+                port: 1194,
+                transport: Transport::Tcp,
+            };
+            let node = VpnNode {
+                id: NodeId::from_endpoint(&endpoint),
+                endpoint,
+                source_hostname: String::new(),
+                country: "JP".into(),
+                profile: "敏感配置标记".into(),
+                profile_digest: "a".repeat(64),
+                quality: Default::default(),
+                source_fetched_at: wall,
+                present: true,
+                last_attempt_at: None,
+            };
+            catalog.nodes.insert(node.id.clone(), node);
+        }
+        let mut scheduler = Scheduler::new(20, 2);
+        scheduler.configure(900, true);
+        scheduler
+            .begin_at(&catalog, None, RoundPurpose::Initial, wall, Instant::now())
+            .unwrap();
+        let records = scheduler.take_diagnostics();
+        assert_eq!(records.len(), 20_000);
+        let (encoded_tx, encoded_rx) = mpsc::sync_channel(1);
+        let (release_tx, release_rx) = mpsc::sync_channel(1);
+        let mut blocked = false;
+        let sink = SelectionSink::new(move |line| {
+            if !blocked {
+                assert!(line.text.len() < 1_048_576);
+                assert!(!line.text.contains("敏感配置标记"));
+                encoded_tx.send(()).unwrap();
+                let _ = release_rx.recv();
+                blocked = true;
+            }
+        });
+        let batch = || SelectionBatch {
+            records: records.clone(),
+            timezone: chrono_tz::Asia::Shanghai,
+            state: ServiceState::Validating,
+        };
+        sink.submit(batch());
+        encoded_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+        sink.submit(batch());
+        sink.submit(batch()); // 队列已满，必须直接丢弃，不能等待输出。
+        tokio::time::timeout(Duration::from_secs(1), async {
+            tokio::task::yield_now().await;
+            let node = scheduler.next(&mut catalog, wall).unwrap();
+            let attempt = scheduler.attempt_id(&node).unwrap();
+            let (active, _) = tokio::sync::watch::channel(Some(node.id.clone()));
+            active.send_replace(None); // 故障撤销独立于编码及输出。
+            scheduler.cancel_queued();
+            scheduler.complete(
+                &node,
+                attempt,
+                crate::scheduler::AttemptDisposition::Cancelled,
+                wall,
+                Instant::now(),
+            );
+            assert!(active.borrow().is_none());
+            assert_eq!(scheduler.running(), 0);
+            assert!(!scheduler.is_running());
+        })
+        .await
+        .unwrap();
+        release_tx.send(()).unwrap();
+    }
     fn silent_sink() -> (Sink, mpsc::Receiver<Line>) {
         let (startup, receiver) = mpsc::sync_channel(1);
         (
@@ -494,6 +735,29 @@ mod tests {
             sink.losses[LogLevel::Debug as usize].load(Ordering::Relaxed),
             4
         );
+    }
+    #[test]
+    fn selection_congestion_is_bounded_and_does_not_hide_activity_failure() {
+        let (sink, _receiver) = silent_sink();
+        for _ in 0..20_000 {
+            sink.submit(line(EventKind::SelectionAssessed));
+            sink.submit(line(EventKind::SelectionDispatched));
+        }
+        sink.submit(line(EventKind::ActiveBlocked));
+        sink.submit(line(EventKind::RuntimeFailed));
+        let queue = sink.ordinary.lock().unwrap();
+        assert_eq!(queue.len(), 63);
+        assert!(
+            queue
+                .iter()
+                .any(|line| line.kind == EventKind::ActiveBlocked)
+        );
+        assert!(
+            queue
+                .iter()
+                .any(|line| line.kind == EventKind::RuntimeFailed)
+        );
+        assert!(sink.losses[LogLevel::Debug as usize].load(Ordering::Relaxed) > 39_000);
     }
     #[test]
     fn all_errors_cannot_be_overwritten_by_warning_and_counters_saturate() {

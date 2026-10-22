@@ -234,6 +234,13 @@ pub fn parse_snapshot_with_policy(
         nodes.insert(
             id.clone(),
             VpnNode {
+                quality: crate::domain::SourceQualityMetrics {
+                    score: crate::domain::SourceQualityMetrics::parse(&record[2], false),
+                    speed_bps: crate::domain::SourceQualityMetrics::parse(&record[4], true),
+                    ping_ms: crate::domain::SourceQualityMetrics::parse(&record[3], true),
+                    sessions: crate::domain::SourceQualityMetrics::parse(&record[7], false),
+                    uptime_ms: crate::domain::SourceQualityMetrics::parse(&record[8], false),
+                },
                 id,
                 endpoint,
                 source_hostname: hostname,
@@ -290,6 +297,26 @@ mod tests {
         .unwrap();
         assert!(result.nodes.is_empty());
         assert_eq!(result.stats.conflicts, 1);
+    }
+    #[test]
+    fn quality_columns_are_normalized_without_rejecting_safe_profiles() {
+        let raw = row("quality", &profile("tcp")).replacen(
+            ",100,20,0,Test,ZZ,0,0,",
+            ",999,0,123456,Test,ZZ,-1,86400000,",
+            1,
+        );
+        let result = parse_snapshot(doc(&raw).as_bytes(), CsvLimits::default()).unwrap();
+        let quality = result.nodes[0].quality;
+        assert_eq!(quality.score, Some(999));
+        assert_eq!(quality.speed_bps, Some(123456));
+        assert_eq!(quality.ping_ms, None);
+        assert_eq!(quality.sessions, None);
+        assert_eq!(quality.uptime_ms, Some(86400000));
+        let duplicate = raw.replacen(",999,", ",1,", 1);
+        let result =
+            parse_snapshot(doc(&(raw + &duplicate)).as_bytes(), CsvLimits::default()).unwrap();
+        assert_eq!(result.nodes.len(), 1);
+        assert_eq!(result.nodes[0].quality.score, Some(999));
     }
     #[test]
     fn malformed_rows_are_skipped_but_global_limits_fail_refresh() {

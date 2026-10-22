@@ -8,7 +8,7 @@ pub fn snapshot(count: usize) -> SourceSnapshot {
   let endpoint=Endpoint {ip:"11.53.0.2".parse().unwrap(),port:u16::try_from(20000+index).unwrap(),transport:Transport::Tcp};
   let profile=format!("client\ndev tun\nproto tcp\nremote {} {}\n<ca>\nCA\n</ca>\n<cert>\nCERT\n</cert>\n<key>\nKEY\n</key>\n",endpoint.ip,endpoint.port);
   let profile=vpngate_auto_proxy::openvpn::sanitize_openvpn(profile.as_bytes(),endpoint.ip).unwrap();
-  VpnNode {id:NodeId::from_endpoint(&endpoint),endpoint,source_hostname:"测试节点".into(),country:"ZZ".into(),profile:profile.as_str().into(),profile_digest:profile.digest().to_hex().to_string(),source_fetched_at:now,present:true,last_attempt_at:None}
+  VpnNode { quality: Default::default(),id:NodeId::from_endpoint(&endpoint),endpoint,source_hostname:"测试节点".into(),country:"ZZ".into(),profile:profile.as_str().into(),profile_digest:profile.digest().to_hex().to_string(),source_fetched_at:now,present:true,last_attempt_at:None}
  }).collect();
     SourceSnapshot {
         schema_version: 1,
@@ -340,5 +340,37 @@ fn region_changes_filter_full_cache_and_refresh_before_scheduling() {
             .nodes
             .len(),
         3
+    );
+}
+
+#[test]
+fn quality_upgrade_accepts_old_cache_and_normalizes_only_metric_values() {
+    let directory = tempfile::tempdir().unwrap();
+    let store = Storage::new(directory.path()).unwrap();
+    let source = snapshot(1);
+    store.save_source(&source).unwrap();
+    let path = directory.path().join("nodes.json");
+    let mut value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    value["nodes"][0].as_object_mut().unwrap().remove("quality");
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(
+        store
+            .load_source(&source.source_url, Duration::from_secs(86400), Utc::now())
+            .is_ok()
+    );
+    value["nodes"][0]["quality"] = serde_json::json!({"score": "bad", "uptime_ms": 86400000});
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    let restored = store
+        .load_source(&source.source_url, Duration::from_secs(86400), Utc::now())
+        .unwrap();
+    let normalized = serde_json::to_value(&restored.nodes[0]).unwrap();
+    assert!(normalized["quality"]["score"].is_null());
+    assert_eq!(normalized["quality"]["uptime_ms"], 86400000);
+    value["nodes"][0]["quality"]["unexpected"] = serde_json::json!(1);
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(
+        store
+            .load_source(&source.source_url, Duration::from_secs(86400), Utc::now())
+            .is_err()
     );
 }

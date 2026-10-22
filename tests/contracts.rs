@@ -18,8 +18,12 @@ mod netd;
 mod platform;
 #[path = "contracts/probe.rs"]
 mod probe;
+#[path = "contracts/quality.rs"]
+mod quality;
 #[path = "contracts/scheduler.rs"]
 mod scheduler;
+#[path = "support/selection.rs"]
+mod selection_support;
 #[path = "contracts/socks.rs"]
 mod socks;
 #[path = "contracts/storage.rs"]

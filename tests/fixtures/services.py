@@ -4,6 +4,7 @@ import base64
 import csv
 import io
 import json
+import re
 import socket
 import socketserver
 import ssl
@@ -31,8 +32,10 @@ def serve(directory, source):
                 writer = csv.writer(out)
                 writer.writerow(HEADER)
                 protocols = state.get("source_protocols", ["tcp", "udp"])
-                for index in range(state.get("source_count", len(protocols))):
-                    protocol = protocols[index % len(protocols)]
+                entries = state.get("source_nodes")
+                for index in range(len(entries) if entries is not None else state.get("source_count", len(protocols))):
+                    entry = entries[index] if entries is not None else {}
+                    protocol = entry.get("protocol", protocols[index % len(protocols)])
                     profile = (directory / (protocol + ".ovpn")).read_bytes()
                     if "source_port" in state:
                         original = 1194 if protocol == "tcp" else 1195
@@ -40,11 +43,13 @@ def serve(directory, source):
                     if index >= 2:
                         original = 1194 if protocol == "tcp" else 1195
                         profile = profile.replace(f"remote 11.53.0.2 {original}".encode(), f"remote 11.53.0.2 {20000 + index}".encode())
+                    if "port" in entry:
+                        profile = re.sub(rb"(remote 11\.53\.0\.2 )\d+", lambda match: match[1] + str(entry["port"]).encode(), profile)
                     endpoint = state.get("source_ip", "11.53.0.2")
                     profile = profile.replace(b"remote 11.53.0.2 ", f"remote {endpoint} ".encode())
                     countries = state.get("source_countries", ["ZZ"])
                     country = countries[index % len(countries)]
-                    writer.writerow([protocol, endpoint, 0, 1, 0, "Test", country, 0, 0, 0, 0, "", "", "", base64.b64encode(profile).decode()])
+                    writer.writerow([protocol, endpoint, entry.get("score", 0), entry.get("ping_ms", 1), entry.get("speed_bps", 0), "Test", country, entry.get("sessions", 0), entry.get("uptime_ms", 0), 0, 0, "", "", "", base64.b64encode(profile).decode()])
                 out.write("*\n")
                 body = out.getvalue().encode()
                 self.send_response(state.get("source_code", 200))
@@ -57,6 +62,8 @@ def serve(directory, source):
             code = state.get("code", 204 if self.path.startswith("/generate_204") else 200)
             transport = "tcp" if self.client_address[0].startswith("10.77.") else "udp"
             code = state.get("transport_codes", {}).get(transport, code)
+            if state.get("transport_delays", {}).get(transport, 0):
+                time.sleep(state["transport_delays"][transport])
             if self.path.startswith("/redirect"):
                 self.send_response(302)
                 self.send_header("Location", "/generate_204")

@@ -96,3 +96,142 @@ fn identical_fresh_source_refresh_preserves_recovery_backoff_but_new_inputs_reop
         &catalog, &empty, false
     ));
 }
+
+#[tokio::test(start_paused = true)]
+async fn recovery_cooldown_identity_history_and_new_search_are_independent() {
+    let wall = Utc::now();
+    let mono = tokio::time::Instant::now();
+    let source = snapshot(3);
+    let mut catalog = Catalog::default();
+    catalog.merge(&source, None);
+    let mut scheduler = Scheduler::new(1, 2);
+    scheduler
+        .begin_at(&catalog, None, RoundPurpose::Recovery, wall, mono)
+        .unwrap();
+    let failed = scheduler.next(&mut catalog, wall).unwrap();
+    scheduler.complete(
+        &failed,
+        scheduler.attempt_id(&failed).unwrap_or_default(),
+        AttemptDisposition::Failed,
+        wall,
+        mono,
+    );
+    scheduler.complete(
+        &failed,
+        scheduler.attempt_id(&failed).unwrap_or_default(),
+        AttemptDisposition::Failed,
+        wall,
+        mono,
+    );
+    assert_eq!(scheduler.runtime(&failed).unwrap().consecutive_failures, 1);
+    let mut reduced = source.clone();
+    reduced.nodes.retain(|n| n.id != failed.id);
+    tokio::time::advance(std::time::Duration::from_secs(5)).await;
+    catalog.merge(&reduced, None);
+    scheduler
+        .sync(&catalog, tokio::time::Instant::now())
+        .unwrap();
+    tokio::time::advance(std::time::Duration::from_secs(5)).await;
+    catalog.merge(&source, None);
+    scheduler
+        .sync(&catalog, tokio::time::Instant::now())
+        .unwrap();
+    assert!(scheduler.runtime(&failed).unwrap().attempted);
+    assert_eq!(
+        scheduler.runtime(&failed).unwrap().cooldown_until,
+        Some(mono + std::time::Duration::from_secs(30))
+    );
+    scheduler.start_recovery();
+    assert!(!scheduler.runtime(&failed).unwrap().attempted);
+    scheduler
+        .begin_at(
+            &catalog,
+            None,
+            RoundPurpose::Recovery,
+            wall + Delta::seconds(10),
+            tokio::time::Instant::now(),
+        )
+        .unwrap();
+    let next = scheduler
+        .next(&mut catalog, wall + Delta::seconds(10))
+        .unwrap();
+    assert_ne!(next.id, failed.id, "新故障寻找不能清除节点冷却");
+    scheduler.complete(
+        &next,
+        scheduler.attempt_id(&next).unwrap_or_default(),
+        AttemptDisposition::Cancelled,
+        wall,
+        tokio::time::Instant::now(),
+    );
+    assert_eq!(scheduler.runtime(&next).unwrap().consecutive_failures, 0);
+    assert!(!scheduler.runtime(&next).unwrap().attempted);
+}
+
+#[test]
+fn removed_active_identity_does_not_restore_stale_success_on_reappearance() {
+    let source = snapshot(1);
+    let node = &source.nodes[0];
+    let mut catalog = Catalog::default();
+    catalog.merge(&source, None);
+    catalog.record(check(node, Layer::Exit));
+    let mut empty = source.clone();
+    empty.nodes.clear();
+    catalog.merge(&empty, Some(&node.id));
+    assert!(catalog.checks.is_empty());
+    catalog.merge(&source, Some(&node.id));
+    assert!(catalog.checks.is_empty());
+}
+
+#[tokio::test(start_paused = true)]
+async fn switching_back_to_old_profile_keeps_its_own_cooldown_and_traversal() {
+    let wall = Utc::now();
+    let start = tokio::time::Instant::now();
+    let source = snapshot(2);
+    let original = source.nodes[0].clone();
+    let mut catalog = Catalog::default();
+    catalog.merge(&source, None);
+    let mut scheduler = Scheduler::new(1, 1);
+    catalog.nodes.get_mut(&original.id).unwrap().quality.score = Some(100);
+    scheduler
+        .begin_at(&catalog, None, RoundPurpose::Recovery, wall, start)
+        .unwrap();
+    let failed = scheduler.next(&mut catalog, wall).unwrap();
+    assert_eq!(failed.id, original.id);
+    scheduler.complete(
+        &failed,
+        scheduler.attempt_id(&failed).unwrap_or_default(),
+        AttemptDisposition::Failed,
+        wall,
+        start,
+    );
+    let mut changed = source.clone();
+    changed.nodes[0].profile_digest = "f".repeat(64);
+    catalog.merge(&changed, None);
+    scheduler.sync(&catalog, start).unwrap();
+    assert!(!scheduler.runtime(&changed.nodes[0]).unwrap().attempted);
+    assert_eq!(
+        scheduler.runtime(&original).unwrap().consecutive_failures,
+        1
+    );
+    tokio::time::advance(std::time::Duration::from_secs(10)).await;
+    catalog.merge(&source, None);
+    scheduler
+        .sync(&catalog, tokio::time::Instant::now())
+        .unwrap();
+    assert!(scheduler.runtime(&original).unwrap().attempted);
+    assert_eq!(
+        scheduler.runtime(&original).unwrap().cooldown_until,
+        Some(start + std::time::Duration::from_secs(30))
+    );
+    scheduler
+        .begin_at(
+            &catalog,
+            None,
+            RoundPurpose::Recovery,
+            wall,
+            tokio::time::Instant::now(),
+        )
+        .unwrap();
+    let other = scheduler.next(&mut catalog, wall).unwrap();
+    assert_ne!(other.id, original.id);
+}
