@@ -605,6 +605,7 @@ mod tests {
             transport: profile.transport(),
         };
         VpnNode {
+            quality: Default::default(),
             id: NodeId::from_endpoint(&endpoint),
             endpoint,
             source_hostname: String::new(),

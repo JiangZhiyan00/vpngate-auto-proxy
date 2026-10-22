@@ -7,6 +7,7 @@ pub mod netd;
 pub mod openvpn;
 pub mod platform;
 pub mod probe;
+pub mod quality;
 pub mod scheduler;
 pub mod service;
 pub mod socks;

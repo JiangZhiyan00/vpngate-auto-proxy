@@ -62,6 +62,7 @@ fn availability_is_bound_to_layer_version_and_expiry() {
         transport: Transport::Tcp,
     };
     let mut node = VpnNode {
+        quality: Default::default(),
         id: NodeId::from_endpoint(&endpoint),
         endpoint,
         source_hostname: "display".into(),
@@ -86,6 +87,15 @@ fn availability_is_bound_to_layer_version_and_expiry() {
         failure_reason: None,
     };
     assert!(result.is_usable_for(&node, now));
+    assert!(result.is_usable_for(
+        &node,
+        now + chrono::Duration::minutes(15) - chrono::Duration::nanoseconds(1)
+    ));
+    assert!(!result.is_usable_for(&node, now + chrono::Duration::minutes(15)));
+    assert!(!result.is_usable_for(
+        &node,
+        now + chrono::Duration::minutes(15) + chrono::Duration::nanoseconds(1)
+    ));
     result.layer = Layer::Tunnel;
     assert!(!result.is_usable_for(&node, now));
     result.layer = Layer::Exit;
@@ -95,4 +105,22 @@ fn availability_is_bound_to_layer_version_and_expiry() {
         result.current_outcome(now + chrono::Duration::minutes(15)),
         Outcome::Expired
     );
+}
+
+#[test]
+fn optional_quality_normalizes_invalid_fields_without_changing_identity() {
+    let node = super::selection_support::source(1).nodes.remove(0);
+    let mut value = serde_json::to_value(&node).unwrap();
+    value["quality"] = serde_json::json!({"score": 1, "speed_bps": 0, "ping_ms": -1, "sessions": 0, "uptime_ms": 0});
+    let restored: VpnNode = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(restored.id, node.id);
+    assert_eq!(restored.profile_digest, node.profile_digest);
+    let normalized = serde_json::to_value(restored).unwrap();
+    assert!(normalized["quality"]["ping_ms"].is_null());
+    assert!(normalized["quality"]["speed_bps"].is_null());
+    assert_eq!(normalized["quality"]["sessions"], 0);
+    value["quality"] = serde_json::json!({"unexpected": 1});
+    assert!(serde_json::from_value::<VpnNode>(value.clone()).is_err());
+    value["quality"] = serde_json::Value::Null;
+    assert!(serde_json::from_value::<VpnNode>(value).is_err());
 }

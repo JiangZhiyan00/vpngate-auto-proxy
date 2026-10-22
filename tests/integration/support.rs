@@ -107,6 +107,14 @@ impl ServiceFixture {
         max_connections: usize,
         change: impl FnOnce(&mut vpngate_auto_proxy::config::AppConfig),
     ) -> Self {
+        Self::start_with_stderr(auth, max_connections, change, None)
+    }
+    pub fn start_with_stderr(
+        auth: bool,
+        max_connections: usize,
+        change: impl FnOnce(&mut vpngate_auto_proxy::config::AppConfig),
+        stderr: Option<std::process::Stdio>,
+    ) -> Self {
         use std::os::unix::fs::PermissionsExt;
         require_linux();
         let directory = tempfile::tempdir().unwrap();
@@ -136,7 +144,8 @@ impl ServiceFixture {
         change(&mut config);
         let path = directory.path().join("config.json");
         std::fs::write(&path, serde_json::to_vec(&config).unwrap()).unwrap();
-        let stderr = std::fs::File::create(directory.path().join("events.log")).unwrap();
+        let events = std::fs::File::create(directory.path().join("events.log")).unwrap();
+        let stderr = stderr.unwrap_or_else(|| events.into());
         let started = std::time::Instant::now();
         let child = std::process::Command::new(env!("CARGO_BIN_EXE_vap"))
             .args(["run", "--config"])

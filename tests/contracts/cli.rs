@@ -532,3 +532,38 @@ fn invalid_log_options_never_echo_values_or_publish_startup() {
         assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 1);
     }
 }
+
+#[test]
+fn selection_details_do_not_expand_status_or_change_control_frame_bound() {
+    let mut value = snapshot(false);
+    value["candidates"]["total"] = json!(20_000);
+    let status: vpngate_auto_proxy::cli::StatusSnapshot =
+        serde_json::from_value(value.clone()).unwrap();
+    let encoded = serde_json::to_vec(&status).unwrap();
+    assert!(encoded.len() < 64 * 1024);
+    let keys = value["candidates"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(
+        keys,
+        [
+            "total",
+            "available",
+            "expired",
+            "not_tested",
+            "round_selected",
+            "round_completed",
+            "running",
+            "next_scheduled_at"
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect()
+    );
+    for key in ["selection", "nodes", "assessments", "ranking"] {
+        assert!(value.get(key).is_none());
+    }
+}

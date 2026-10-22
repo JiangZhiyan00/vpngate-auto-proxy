@@ -422,3 +422,37 @@ async fn stop_cancels_concurrent_candidates_and_reaps_every_recorded_process() {
         }
     }
 }
+
+#[tokio::test]
+#[ignore = "需要专用 Linux 冷却等待期间停止及回收"]
+async fn stop_during_node_cooldown_does_not_wait_for_eligibility_or_relaunch() {
+    let _state = FixtureStateGuard::set(json!({"source_protocols":["tcp"],"code":503}));
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
+        c.retry_initial_seconds = 1;
+        c.retry_max_seconds = 1;
+        c.exit_check_max_attempts = 1;
+        c.candidate_retries = 0;
+    });
+    wait_event(&service, "round_finished", 1).await;
+    wait_event(&service, "selection_skipped", 1).await;
+    assert!(
+        events(&service)
+            .iter()
+            .any(|e| e["event_type"] == "selection_skipped"
+                && e["selection"]["reason"] == "cooldown")
+    );
+    let status = command(&service, &["status", "--json", "--check-ready"]);
+    assert_eq!(status.status.code(), Some(3));
+    let started = std::time::Instant::now();
+    assert!(command(&service, &["stop"]).status.success());
+    assert!(started.elapsed() < Duration::from_secs(15));
+    assert!(exited(&mut service).await.success());
+    assert!(!service.config.runtime_dir.exists());
+    assert_eq!(
+        events(&service)
+            .iter()
+            .filter(|e| e["event_type"] == "pending_started")
+            .count(),
+        1
+    );
+}

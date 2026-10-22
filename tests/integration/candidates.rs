@@ -10,7 +10,7 @@ pub(super) fn events(service: &ServiceFixture) -> Vec<Value> {
         .collect()
 }
 pub(super) async fn wait_event(service: &ServiceFixture, kind: &str, count: usize) {
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(20);
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(90);
     loop {
         if events(service)
             .iter()
@@ -489,4 +489,88 @@ async fn empty_source_uses_recovery_backoff_and_detects_new_nodes() {
     );
     let _available = FixtureStateGuard::set(json!({"source_protocols":["tcp"]}));
     wait_event(&service, "active_promoted", 1).await;
+}
+
+#[tokio::test]
+#[ignore = "需要专用 Linux 十轮候选、指标更新及长连接"]
+async fn ten_ranked_background_rounds_preserve_active_and_release_candidates() {
+    let _state = FixtureStateGuard::set(json!({"source_nodes":[
+        {"protocol":"tcp","port":1194,"score":200},
+        {"protocol":"udp","port":1195,"score":100}
+    ]}));
+    let routes = vpngate_auto_proxy::netd::system::run_command("ip", &["-4", "route", "show"])
+        .await
+        .unwrap();
+    let dns = std::fs::read("/etc/resolv.conf").unwrap();
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
+        c.candidate_interval_seconds = 1;
+        c.source_refresh_seconds = 1;
+        c.candidate_result_ttl_seconds = 1;
+    });
+    wait_event(&service, "active_promoted", 1).await;
+    let mut echo = service.connect().await;
+    assert!(negotiate(&mut echo, None).await);
+    assert_eq!(request(&mut echo, 1, "fixture.example", 19090).await, 0);
+    let tcp_id =
+        vpngate_auto_proxy::domain::NodeId::from_endpoint(&vpngate_auto_proxy::domain::Endpoint {
+            ip: "11.53.0.2".parse().unwrap(),
+            port: 1194,
+            transport: vpngate_auto_proxy::domain::Transport::Tcp,
+        });
+    let tcp_active = events(&service)
+        .iter()
+        .any(|e| e["event_type"] == "active_promoted" && e["node_id"] == tcp_id.to_string());
+    let _updated = FixtureStateGuard::set(json!({"source_nodes":[
+        {"protocol":"tcp","port":1194,"score":if tcp_active {1}else{999}},
+        {"protocol":"udp","port":1195,"score":if tcp_active {999}else{1}}
+    ]}));
+    for round in 2..=11 {
+        wait_event(&service, "round_finished", round).await;
+        echo.write_all(b"stable").await.unwrap();
+        let mut reply = [0; 6];
+        tokio::time::timeout(Duration::from_secs(3), echo.read_exact(&mut reply))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(&reply, b"stable");
+        http(&mut service).await;
+    }
+    let records = events(&service);
+    assert_eq!(
+        records
+            .iter()
+            .filter(|e| e["event_type"] == "active_promoted")
+            .count(),
+        1
+    );
+    let dispatched: Vec<_> = records
+        .iter()
+        .filter(|e| {
+            e["event_type"] == "selection_dispatched" && e["selection"]["purpose"] == "background"
+        })
+        .collect();
+    assert!(
+        dispatched
+            .iter()
+            .any(|e| e["selection"]["reason"] == "exploration_quota")
+    );
+    assert!(
+        dispatched
+            .iter()
+            .any(|e| e["selection"]["assessment"]["metrics"]["score"] == 999)
+    );
+    let manifest: Value = serde_json::from_slice(
+        &std::fs::read(service.config.runtime_dir.join("resources.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(manifest["workers"].as_array().unwrap().len(), 1);
+    drop(echo);
+    drop(service);
+    assert_eq!(
+        routes,
+        vpngate_auto_proxy::netd::system::run_command("ip", &["-4", "route", "show"])
+            .await
+            .unwrap()
+    );
+    assert_eq!(dns, std::fs::read("/etc/resolv.conf").unwrap());
 }

@@ -110,7 +110,10 @@ fn active_record(service: &ServiceFixture) -> Value {
 #[tokio::test]
 #[ignore = "需要受控 Linux 结构故障、旧连接阻断及替代隧道"]
 async fn structural_failure_closes_old_connection_before_http_cycle_and_recovers_same_listener() {
-    let _state = FixtureStateGuard::set(json!({}));
+    let _state = FixtureStateGuard::set(json!({"source_nodes":[
+        {"protocol":"tcp","port":1194,"score":200},
+        {"protocol":"udp","port":1195,"score":100}
+    ]}));
     let observation = NetworkObservation::start().await;
     let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
         c.health_interval_seconds = 60;
@@ -163,6 +166,22 @@ async fn structural_failure_closes_old_connection_before_http_cycle_and_recovers
         .rposition(|e| e["event_type"] == "active_promoted")
         .unwrap();
     assert!(blocked < replacement);
+    let recovery = sequence[blocked..replacement]
+        .iter()
+        .find(|e| {
+            e["event_type"] == "selection_dispatched" && e["selection"]["purpose"] == "recovery"
+        })
+        .unwrap();
+    assert_eq!(recovery["selection"]["reason"], "recent_success");
+    assert_ne!(recovery["node_id"], old["node_id"]);
+    assert!(
+        sequence[blocked..replacement]
+            .iter()
+            .any(|e| e["event_type"] == "selection_skipped"
+                && e["node_id"] == old["node_id"]
+                && e["selection"]["reason"] == "cooldown"
+                && e["selection"]["consecutive_failures"] == 1)
+    );
     drop(service);
     observation.finish().await;
 }
@@ -228,6 +247,8 @@ async fn waiting_without_nodes_stays_alive_with_backoff_and_no_direct_business_o
         .parse()
         .unwrap();
     assert!(duration >= 3);
+    // 新的节点冷却下，短试也须跨过首个三十秒资格边界。
+    let duration = duration.max(35);
     let _state = FixtureStateGuard::set(json!({"code":503}));
     let observation = NetworkObservation::start().await;
     let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
@@ -268,11 +289,19 @@ async fn waiting_without_nodes_stays_alive_with_backoff_and_no_direct_business_o
         .filter(|e| e["event_type"] == "round_finished")
         .collect();
     assert!(finishes.len() >= 2, "至少观测一次实际退避后重新检测");
-    for (index, (finish, start)) in finishes.iter().zip(starts.iter().skip(1)).enumerate() {
+    for (index, finish) in finishes.iter().enumerate() {
         let finish =
             chrono::DateTime::parse_from_rfc3339(finish["timestamp"].as_str().unwrap()).unwrap();
-        let start =
-            chrono::DateTime::parse_from_rfc3339(start["timestamp"].as_str().unwrap()).unwrap();
+        // 冷却会生成无派发的空轮，不能把开始和完成日志按位置一一配对。
+        let Some(start) = starts
+            .iter()
+            .map(|event| {
+                chrono::DateTime::parse_from_rfc3339(event["timestamp"].as_str().unwrap()).unwrap()
+            })
+            .find(|start| *start > finish)
+        else {
+            continue;
+        };
         let expected = service
             .config
             .retry_initial_seconds
@@ -397,5 +426,169 @@ async fn identical_source_refresh_does_not_shorten_failed_node_recovery_backoff(
         start.signed_duration_since(finish).num_milliseconds() >= 3900,
         "相同来源刷新绕过节点退避：实际{}毫秒，要求至少3900毫秒",
         start.signed_duration_since(finish).num_milliseconds()
+    );
+}
+
+#[tokio::test]
+#[ignore = "需要专用 Linux 二十一节点恢复、冷却和抓包"]
+async fn recovery_traverses_failed_twenty_before_validating_twenty_first() {
+    let _state = FixtureStateGuard::set(
+        json!({"source_nodes":[{"protocol":"tcp","port":1194,"score":999}]}),
+    );
+    let observation = NetworkObservation::start().await;
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
+        c.source_refresh_seconds = 1;
+        c.retry_initial_seconds = 1;
+        c.retry_max_seconds = 1;
+        c.candidate_retries = 0;
+        c.health_interval_seconds = 60;
+        c.health_timeout_seconds = 1;
+    });
+    wait_event(&service, "round_finished", 1).await;
+    let old = active_record(&service);
+    let mut echo = service.connect().await;
+    assert!(negotiate(&mut echo, None).await);
+    assert_eq!(request(&mut echo, 1, "fixture.example", 19090).await, 0);
+    let nodes:Vec<_>=(0..21).map(|i|json!({"protocol":if i==20 {"udp"}else{"tcp"},"port":if i==20 {1195}else{40000+i},"score":100-i})).collect();
+    let _updated = FixtureStateGuard::set(json!({"source_nodes":nodes}));
+    // 确认新来源已到达，健康活动仍保留。
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        let cache: Value = serde_json::from_slice(
+            &std::fs::read(service.config.data_dir.join("nodes.json")).unwrap(),
+        )
+        .unwrap();
+        if cache["nodes"].as_array().unwrap().len() == 21 {
+            break;
+        }
+        assert!(tokio::time::Instant::now() < deadline);
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    run_command(
+        "ip",
+        &[
+            "netns",
+            "exec",
+            old["namespace"].as_str().unwrap(),
+            "ip",
+            "route",
+            "del",
+            "0.0.0.0/1",
+        ],
+    )
+    .await
+    .unwrap();
+    wait_event(&service, "active_blocked", 1).await;
+    assert!(
+        tokio::time::timeout(Duration::from_secs(3), echo.read_u8())
+            .await
+            .unwrap()
+            .is_err()
+    );
+    wait_event(&service, "active_promoted", 2).await;
+    let records = events(&service);
+    let dispatched: Vec<_> = records
+        .iter()
+        .filter(|e| {
+            e["event_type"] == "selection_dispatched" && e["selection"]["purpose"] == "recovery"
+        })
+        .collect();
+    assert_eq!(dispatched.len(), 21);
+    let unique: std::collections::BTreeSet<_> = dispatched
+        .iter()
+        .map(|e| e["node_id"].as_str().unwrap())
+        .collect();
+    assert_eq!(unique.len(), 21);
+    assert_eq!(
+        active_record(&service)["node_id"],
+        dispatched[20]["node_id"]
+    );
+    assert_ne!(active_record(&service)["node_id"], old["node_id"]);
+    http(&mut service).await;
+    drop(echo);
+    drop(service);
+    observation.finish().await;
+}
+
+#[tokio::test]
+#[ignore = "需要专用Linux环境验证堵塞诊断输出下的真实故障撤销与回收"]
+async fn blocked_diagnostics_do_not_delay_dispatch_fault_revocation_or_shutdown() {
+    use std::os::fd::OwnedFd;
+    let nodes: Vec<_> = (0..500)
+        .map(|index| json!({"score":if index<2 {200}else{0}}))
+        .collect();
+    let _state = FixtureStateGuard::set(json!({"source_nodes":nodes}));
+    let (_reader, writer) = std::os::unix::net::UnixStream::pair().unwrap();
+    // 接收端保留但不读取，真实日志编码后必然填满输出。
+    let mut service = ServiceFixture::start_with_stderr(
+        false,
+        50,
+        |config| {
+            config.log_level = vpngate_auto_proxy::logging::LogLevel::Debug;
+            config.candidate_interval_seconds = 1;
+            config.health_interval_seconds = 60;
+        },
+        Some(std::process::Stdio::from(OwnedFd::from(writer))),
+    );
+    tokio::time::timeout(Duration::from_secs(60), async {
+        loop {
+            let status = tokio::process::Command::new(env!("CARGO_BIN_EXE_vap"))
+                .args(["status", "--check-ready", "--runtime-dir"])
+                .arg(&service.config.runtime_dir)
+                .output()
+                .await
+                .unwrap();
+            if status.status.success() {
+                break;
+            }
+            assert!(service.child.try_wait().unwrap().is_none());
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await
+    .unwrap();
+    let mut echo = service.connect().await;
+    assert!(negotiate(&mut echo, None).await);
+    assert_eq!(request(&mut echo, 1, "fixture.example", 19090).await, 0);
+    let old = active_record(&service);
+    echo.write_all(b"ready").await.unwrap();
+    let mut reply = [0; 5];
+    echo.read_exact(&mut reply).await.unwrap();
+    assert_eq!(&reply, b"ready");
+    run_command(
+        "ip",
+        &[
+            "netns",
+            "exec",
+            old["namespace"].as_str().unwrap(),
+            "ip",
+            "route",
+            "del",
+            "0.0.0.0/1",
+        ],
+    )
+    .await
+    .unwrap();
+    let closed = tokio::time::timeout(Duration::from_secs(5), echo.read_u8())
+        .await
+        .unwrap();
+    assert!(closed.is_err(), "日志堵塞不得阻止旧业务连接撤销");
+    run_command("kill", &["-TERM", &service.child.id().to_string()])
+        .await
+        .unwrap();
+    tokio::time::timeout(Duration::from_secs(10), async {
+        loop {
+            if let Some(status) = service.child.try_wait().unwrap() {
+                assert!(status.success());
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert!(
+        !service.config.runtime_dir.join("resources.json").exists(),
+        "停止必须确认工作槽及资源回收"
     );
 }

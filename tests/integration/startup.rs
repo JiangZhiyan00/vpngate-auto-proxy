@@ -171,3 +171,87 @@ async fn occupied_port_never_publishes_a_startup_summary() {
     assert!(!text.contains("startup_summary"));
     assert!(!service.config.runtime_dir.exists());
 }
+
+#[tokio::test]
+#[ignore = "需要专用 Linux 排名、竞速和真实出口"]
+async fn ranked_second_candidate_can_win_the_first_exit_race() {
+    use super::candidates::{events, http, wait_event};
+    let _state = FixtureStateGuard::set(serde_json::json!({
+        "source_nodes":[
+            {"protocol":"tcp","port":1194,"score":200},
+            {"protocol":"udp","port":1195,"score":100}
+        ], "transport_delays":{"tcp":2}
+    }));
+    let mut service = ServiceFixture::start_debug(false, 50);
+    wait_event(&service, "active_promoted", 1).await;
+    let records = events(&service);
+    let dispatched: Vec<_> = records
+        .iter()
+        .filter(|e| e["event_type"] == "selection_dispatched")
+        .collect();
+    assert_eq!(dispatched.len(), 2, "首次须并发派发两个排名候选");
+    let promoted = records
+        .iter()
+        .find(|e| e["event_type"] == "active_promoted")
+        .unwrap();
+    assert_eq!(
+        promoted["node_id"],
+        dispatched[1]["selection"]["assessment"]["node_id"]
+    );
+    assert!(
+        dispatched[0]["selection"]["assessment"]["total_score_micros"]
+            .as_u64()
+            .unwrap()
+            > dispatched[1]["selection"]["assessment"]["total_score_micros"]
+                .as_u64()
+                .unwrap()
+    );
+    http(&mut service).await;
+}
+
+#[tokio::test]
+#[ignore = "需要专用 Linux 二十一节点与真实出口"]
+async fn ranked_search_reaches_twenty_first_before_retrying_failed_twenty() {
+    use super::candidates::{events, http, wait_event};
+    let nodes: Vec<_> = (0..21)
+        .map(|i| {
+            serde_json::json!({
+                "protocol":"tcp", "port":if i == 20 {1194} else {40000+i}, "score":100-i
+            })
+        })
+        .collect();
+    let _state = FixtureStateGuard::set(serde_json::json!({"source_nodes":nodes}));
+    let mut service = ServiceFixture::start_debug_with(false, 50, |c| {
+        c.retry_initial_seconds = 1;
+        c.retry_max_seconds = 1;
+        c.candidate_retries = 0;
+    });
+    wait_event(&service, "active_promoted", 1).await;
+    let records = events(&service);
+    let dispatched: Vec<_> = records
+        .iter()
+        .filter(|e| e["event_type"] == "selection_dispatched")
+        .collect();
+    assert_eq!(dispatched.len(), 21);
+    let unique: std::collections::BTreeSet<_> = dispatched
+        .iter()
+        .map(|e| e["selection"]["assessment"]["node_id"].as_str().unwrap())
+        .collect();
+    assert_eq!(unique.len(), 21, "未尝试节点必须先于失败节点重试");
+    let promoted = records
+        .iter()
+        .find(|e| e["event_type"] == "active_promoted")
+        .unwrap();
+    assert_eq!(
+        promoted["node_id"],
+        dispatched[20]["selection"]["assessment"]["node_id"]
+    );
+    assert!(
+        records
+            .iter()
+            .filter(|e| e["event_type"] == "round_started")
+            .count()
+            >= 2
+    );
+    http(&mut service).await;
+}

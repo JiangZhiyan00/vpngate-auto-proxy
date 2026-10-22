@@ -86,6 +86,7 @@ async fn dispatch(
                 "连接时限与实例配置不一致"
             );
             let node = VpnNode {
+                quality: Default::default(),
                 id: node_id,
                 endpoint,
                 profile_digest: blake3::hash(profile.as_bytes()).to_hex().to_string(),

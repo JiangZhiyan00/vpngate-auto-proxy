@@ -309,6 +309,7 @@ mod tests {
             transport: profile.transport(),
         };
         VpnNode {
+            quality: Default::default(),
             id: crate::domain::NodeId::from_endpoint(&endpoint),
             endpoint,
             source_hostname: String::new(),
