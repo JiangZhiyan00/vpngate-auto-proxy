@@ -160,7 +160,7 @@ struct Queued {
 }
 pub const MAX_RUNTIME_IDENTITIES: usize = 40_000;
 pub struct Scheduler {
-    #[cfg(test)]
+    #[cfg(all(test, target_os = "macos"))]
     capacity_for_test: Option<usize>,
     batch: usize,
     concurrency: usize,
@@ -188,7 +188,7 @@ pub struct Scheduler {
 impl Scheduler {
     pub fn new(batch: usize, concurrency: usize) -> Self {
         Self {
-            #[cfg(test)]
+            #[cfg(all(test, target_os = "macos"))]
             capacity_for_test: None,
             batch,
             concurrency,
@@ -214,7 +214,7 @@ impl Scheduler {
             completed: 0,
         }
     }
-    #[cfg(test)]
+    #[cfg(all(test, target_os = "macos"))]
     pub(crate) fn limit_capacity_for_test(&mut self, capacity: usize) {
         self.capacity_for_test = Some(capacity);
     }
@@ -242,9 +242,9 @@ impl Scheduler {
             .iter()
             .filter(|key| !self.history.contains_key(*key))
             .count();
-        #[cfg(test)]
+        #[cfg(all(test, target_os = "macos"))]
         let capacity = self.capacity_for_test.unwrap_or(MAX_RUNTIME_IDENTITIES);
-        #[cfg(not(test))]
+        #[cfg(not(all(test, target_os = "macos")))]
         let capacity = MAX_RUNTIME_IDENTITIES;
         anyhow::ensure!(
             self.history.len().saturating_add(additions) <= capacity,
