@@ -14,6 +14,20 @@ def output(*args):
     return subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE).stdout
 
 
+def verify_file_digests(expected, actual, description):
+    if actual == expected and expected:
+        return
+    missing = sorted(expected.keys() - actual.keys())
+    extra = sorted(actual.keys() - expected.keys())
+    changed = sorted(path for path in expected.keys() & actual.keys() if expected[path] != actual[path])
+    details = []
+    for label, paths in (('缺少', missing), ('多出', extra), ('内容改变', changed)):
+        details.append(f'{label} {len(paths)}' + (f'，示例：{paths[0]}' if paths else ''))
+    if not expected:
+        details.append('源码材料清单为空')
+    raise RuntimeError(description + '：' + '；'.join(details))
+
+
 def main():
     parser = argparse.ArgumentParser(description="核对镜像内第三方原文材料")
     parser.add_argument("--image", default="vpngate-auto-proxy:local")
@@ -46,11 +60,7 @@ def main():
         if not separator or path in actual:
             raise RuntimeError("镜像许可文件列表格式无效或重复")
         actual[path] = digest
-    if actual != expected:
-        missing = sorted(expected.keys() - actual.keys())
-        extra = sorted(actual.keys() - expected.keys())
-        changed = sorted(path for path in expected.keys() & actual.keys() if expected[path] != actual[path])
-        raise RuntimeError(f"镜像许可文本不一致：缺少 {len(missing)}，多出 {len(extra)}，内容改变 {len(changed)}")
+    verify_file_digests(expected, actual, '镜像许可文本不一致')
     extra_count = 0
     for directory in ('nested', 'runtime'):
         root = ROOT / 'docs/third-party' / directory
@@ -63,8 +73,7 @@ def main():
                        '--security-opt', 'no-new-privileges', '--read-only', '--entrypoint', 'find',
                        options.image, prefix.rstrip('/'), '-type', 'f', '-exec', 'sha256sum', '{}', '+').splitlines()
         observed = dict((line.partition('  ')[2], line.partition('  ')[0]) for line in lines)
-        if not wanted or observed != wanted:
-            raise RuntimeError('镜像补充材料与源码不一致：' + directory)
+        verify_file_digests(wanted, observed, '镜像补充材料与源码不一致：' + directory)
         extra_count += len(wanted)
     for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
         path = "/usr/share/licenses/vpngate-auto-proxy/" + name

@@ -3,6 +3,10 @@ FROM ${RUNTIME_IMAGE}
 ARG RELEASE_VERSION
 ARG APPARMOR_SHA256
 ARG SOURCE_COMMIT
+# 重新收集的材料必须完整替换旧目录，避免合并复制残留旧版本文件。
+RUN rm -rf /usr/share/licenses/vpngate-auto-proxy/rust \
+           /usr/share/licenses/vpngate-auto-proxy/nested \
+           /usr/share/licenses/vpngate-auto-proxy/runtime
 COPY LICENSE THIRD_PARTY_NOTICES.md /usr/share/licenses/vpngate-auto-proxy/
 COPY docs/third-party/rust/ /usr/share/licenses/vpngate-auto-proxy/rust/
 COPY docs/third-party/nested/ /usr/share/licenses/vpngate-auto-proxy/nested/
